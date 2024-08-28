@@ -98,21 +98,30 @@ while True:
                 current_car_count += 1
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2),
                               (0, 255, 0), 2)  # Green for cars
-                lane = 2
+                # lane = random.choice([1, 2])  # Randomly set lane
             elif model.names[class_id] == 'bus':
                 current_bus_count += 1
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2),
                               (255, 255, 0), 2)  # Blue for buses
-                lane = 2
+                # lane = random.choice([1, 2])  # Randomly set lane
             elif model.names[class_id] == 'motorcycle':
                 current_motorcycle_count += 1
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2),
                               (0, 0, 255), 2)  # Red for motorcycles
-                lane = 1  # Motorcycles use lane 1
-            if (model.names[class_id] == 'car' or model.names[class_id] == 'bus'):
+                lane = 0  # Motorcycles use lane 1
+            if (model.names[class_id] == 'car' or model.names[class_id] == 'bus' or model.names[class_id] == 'motorcycle'):
                 # Randomly set willTurn
                 will_turn = random.choice([True, False])
-
+                if (model.names[class_id] != 'motorcycle'):
+                    if (will_turn):
+                        lane = 2
+                    else:
+                        lane = random.choice([1, 2])
+                else:
+                    if (will_turn):
+                        lane = 2
+                    else:
+                        lane = 0
                 # Create detection data
                 detection_data = {
                     "direction": 1,  # This could be updated based on your needs
