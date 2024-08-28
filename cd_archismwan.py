@@ -33,7 +33,7 @@ model = yolov5.load('yolov5s.pt')
 stream_urls = [
 # List of video streams
     'http://181.57.169.89:8080/mjpg/video.mjpg',
-    'https://www.youtube.com/2fca440b-d421-4ff8-bf7e-394d83f3413f',
+    'http://181.57.169.89:8080/mjpg/video.mjpg',
     'http://181.57.169.89:8080/mjpg/video.mjpg',
     'http://181.57.169.89:8080/mjpg/video.mjpg',
 ]
