@@ -6,6 +6,7 @@ import asyncio
 import websockets
 import json
 import random
+from ultralytics import YOLO
 
 # Global variables
 roi_points = []
@@ -27,7 +28,7 @@ async def send_detection_data(data):
         print(f"Sent data: {data}")
 
 # Load YOLO model
-model = yolov5.load('yolov5s.pt')
+model = YOLO('yolov8n.pt')
 
 # Open video stream
 cap = cv2.VideoCapture('http://181.57.169.89:8080/mjpg/video.mjpg')
