@@ -68,7 +68,7 @@ y = {'right': [348, 370, 398], 'down': [0, 0, 0],
 
 vehicles = {'right': {0: [], 1: [], 2: [], 'crossed': 0}, 'down': {0: [], 1: [], 2: [], 'crossed': 0},
             'left': {0: [], 1: [], 2: [], 'crossed': 0}, 'up': {0: [], 1: [], 2: [], 'crossed': 0}}
-vehicleTypes = {0: 'car', 1: 'bus', 2: 'truck', 3: 'rickshaw', 4: 'bike'}
+vehicleTypes = {0: 'car', 1: 'bus', 2: 'truck', 3: '', 4: 'bike'}
 directionNumbers = {0: 'right', 1: 'down', 2: 'left', 3: 'up'}
 
 # Coordinates of signal image, timer, and vehicle count
@@ -398,18 +398,18 @@ def repeat():
 
 
 def printStatus():
-	for i in range(0, noOfSignals):
-		if (i == currentGreen):
-			if (currentYellow == 0):
-				print(" GREEN TS", i+1, "-> r:",
-				      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
-			else:
-				print("YELLOW TS", i+1, "-> r:",
-				      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
-		else:
-			print("   RED TS", i+1, "-> r:",
-			      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
-	print()
+    for i in range(0, noOfSignals):
+        if (i == currentGreen):
+            if (currentYellow == 0):
+                print(" GREEN TS", i+1, "-> r:",
+                      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
+            else:
+                print("YELLOW TS", i+1, "-> r:",
+                      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
+        else:
+            print("   RED TS", i+1, "-> r:",
+                  signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
+    print()
 
 # Update values of the signal timers after every second
 
