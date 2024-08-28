@@ -18,7 +18,9 @@ def click_event(event, x, y, flags, param):
 
 
 # Load YOLO model
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = yolov5.load('yolov5s.pt')
+model = model.to(device)
 
 # Open video stream
 cap = cv2.VideoCapture('http://181.57.169.89:8080/mjpg/video.mjpg')
