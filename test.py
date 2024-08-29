@@ -398,18 +398,18 @@ def repeat():
 
 
 def printStatus():
-	for i in range(0, noOfSignals):
-		if (i == currentGreen):
-			if (currentYellow == 0):
-				print(" GREEN TS", i+1, "-> r:",
-				      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
-			else:
-				print("YELLOW TS", i+1, "-> r:",
-				      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
-		else:
-			print("   RED TS", i+1, "-> r:",
-			      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
-	print()
+    for i in range(0, noOfSignals):
+        if (i == currentGreen):
+            if (currentYellow == 0):
+                print(" GREEN TS", i+1, "-> r:",
+                      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
+            else:
+                print("YELLOW TS", i+1, "-> r:",
+                      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
+        else:
+            print("   RED TS", i+1, "-> r:",
+                  signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
+    print()
 
 # Update values of the signal timers after every second
 
@@ -431,6 +431,8 @@ def updateValues():
 def generateVehicles():
     while (True):
         vehicle_type = random.randint(0, 4)
+        while vehicle_type == 3:
+            vehicle_type = random.randint(0, 4)
         if (vehicle_type == 4):
             lane_number = 0
         else:
