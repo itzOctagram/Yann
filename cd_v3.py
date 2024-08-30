@@ -117,11 +117,6 @@ while True:
                         lane = 2
                     else:
                         lane = random.choice([1, 2])
-                else:
-                    if (will_turn):
-                        lane = 2
-                    else:
-                        lane = 0
                 # Create detection data
                 detection_data = {
                     "direction": 1,  # This could be updated based on your needs
@@ -129,9 +124,9 @@ while True:
                     "vehicleClass": model.names[class_id],
                     "willTurn": will_turn
                 }
-
-                # Send data to WebSocket server
-                asyncio.get_event_loop().run_until_complete(send_detection_data(detection_data))
+                if ((model.names[class_id] == 'car' and current_car_count > prev_car_count) or (model.names[class_id] == 'bus' and current_bus_count > prev_bus_count) or (model.names[class_id] == 'motorcycle' and current_motorcycle_count > prev_motorcycle_count)):
+                    # Send data to WebSocket server
+                    asyncio.get_event_loop().run_until_complete(send_detection_data(detection_data))
 
     # Update total counts only if the current counts have changed
     if current_car_count > prev_car_count:
