@@ -1,4 +1,3 @@
-import os
 import cv2
 import numpy as np
 import torch
@@ -7,10 +6,14 @@ import asyncio
 import websockets
 import json
 import random
-import pafy
+import streamlink
 
-# Set the backend to use yt-dlp
-os.environ["PAFY_BACKEND"] = "internal"
+# YouTube live stream URL
+youtube_url = "https://www.youtube.com/watch?v=HaF5j33VyCI"
+
+# Use streamlink to get the best stream URL
+streams = streamlink.streams(youtube_url)
+stream_url = streams['best'].url
 
 # Global variables
 roi_points = []
@@ -34,14 +37,8 @@ async def send_detection_data(data):
 # Load YOLO model
 model = yolov5.load('yolov5s.pt')
 
-# Extract the stream URL using pafy
-url = "https://www.youtube.com/watch?v=_9OBhtLA9Ig"
-video = pafy.new(url)
-best = video.getbest(preftype="mp4")
-video_url = best.url
-
 # Open video stream
-cap = cv2.VideoCapture(video_url)
+cap = cv2.VideoCapture(stream_url)
 
 # Read first frame to set up ROI selection
 ret, frame = cap.read()
@@ -65,7 +62,7 @@ while len(roi_points) < 4:
 
 cv2.destroyWindow('ROI Selection')
 
-# Initialize car, bus, and motorcycle counts
+# Initialize vehicle counts
 current_car_count = 0
 total_car_count = 0
 current_bus_count = 0
@@ -103,6 +100,7 @@ while True:
         x1, y1, x2, y2 = map(int, det[:4])
         center = ((x1 + x2) // 2, (y1 + y2) // 2)
         lane = 0
+
         # Check if the center of the object is in the ROI
         if roi_polygon is not None and cv2.pointPolygonTest(roi_polygon, center, False) >= 0:
             if model.names[class_id] == 'car':
@@ -118,14 +116,16 @@ while True:
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2),
                               (0, 0, 255), 2)  # Red for motorcycles
                 lane = 0  # Motorcycles use lane 1
-            if (model.names[class_id] in ['car', 'bus', 'motorcycle']):
+
+            if model.names[class_id] in ['car', 'bus', 'motorcycle']:
                 # Randomly set willTurn
                 will_turn = random.choice([True, False])
-                if (model.names[class_id] != 'motorcycle'):
-                    if (will_turn):
+                if model.names[class_id] != 'motorcycle':
+                    if will_turn:
                         lane = 2
                     else:
                         lane = random.choice([1, 2])
+
                 # Create detection data
                 detection_data = {
                     "direction": 1,  # This could be updated based on your needs
@@ -134,8 +134,11 @@ while True:
                     "willTurn": will_turn
                 }
 
-                # Send data to WebSocket server
-                asyncio.get_event_loop().run_until_complete(send_detection_data(detection_data))
+                if ((model.names[class_id] == 'car' and current_car_count > prev_car_count) or
+                    (model.names[class_id] == 'bus' and current_bus_count > prev_bus_count) or
+                        (model.names[class_id] == 'motorcycle' and current_motorcycle_count > prev_motorcycle_count)):
+                    # Send data to WebSocket server
+                    asyncio.get_event_loop().run_until_complete(send_detection_data(detection_data))
 
     # Update total counts only if the current counts have changed
     if current_car_count > prev_car_count:
