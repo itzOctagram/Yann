@@ -13,7 +13,7 @@ youtube_url = "https://www.youtube.com/watch?v=HaF5j33VyCI"
 
 # Use streamlink to get the best stream URL
 streams = streamlink.streams(youtube_url)
-stream_url = streams['best'].url
+stream_url = streams['worst'].url
 
 # Global variables
 roi_points = []
