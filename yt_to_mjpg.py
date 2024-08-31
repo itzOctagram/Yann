@@ -1,4 +1,4 @@
-#ToDO: Download a YouTube video and convert it to MJPG format using yt-dlp and ffmpeg-python @Karan
+#TODO: Download a YouTube video and convert it to MJPG format using yt-dlp and ffmpeg-python @Karan
 
 
 '''
