@@ -6,7 +6,8 @@ import json
 # Store connected clients
 clients = {
     'sender': None,
-    'receiver': None
+    'receiver': None,
+    'sender1': None,
 }
 
 
@@ -16,6 +17,8 @@ async def handler(websocket, path):
         clients['sender'] = websocket
     elif path == "/receiver":
         clients['receiver'] = websocket
+    elif path == "/sender1":
+        clients['sender1'] = websocket
 
     async for message in websocket:
         data = json.loads(message)
@@ -28,7 +31,7 @@ async def handler(websocket, path):
             print("Sent data to receiver")
 
         # Send acknowledgment to the sender client
-        if clients['sender']:
+        if clients['sender'] or clients['sender1']:
             ack = json.dumps({"response": "Data received"})
             await clients['sender'].send(ack)
             print("Sent acknowledgment to sender")
