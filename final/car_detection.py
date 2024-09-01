@@ -10,12 +10,15 @@ import random
 import warnings
 import requests
 import threading
+import asyncio
 warnings.filterwarnings("ignore", category=FutureWarning)
+
 
 async def send_detection_data(data):
     async with websockets.connect("ws://localhost:8765/sender") as websocket:
         await websocket.send(json.dumps(data))
         print(f"Sent data: {data}")
+
 
 class VehicleCounts:
     car: int
@@ -26,7 +29,6 @@ class VehicleCounts:
         self.car = car
         self.bus = bus
         self.motorcycle = motorcycle
-
 
 class Stream:
     url: str
@@ -51,6 +53,7 @@ class Stream:
         self.prev_counts = VehicleCounts()
 
     def getFrame(self):
+        print("Getting frame", self.label)
         if (self.cap != None) and (self.type != "image"):
             print("Using existing cap")
             return self.cap.read()
@@ -82,8 +85,8 @@ class Stream:
             print("Failed to grab first frame")
             exit()
 
-        cv2.namedWindow('ROI Selection')
-        cv2.setMouseCallback('ROI Selection', self.click_event)
+        cv2.namedWindow(f'ROI Selection - {self.label}')
+        cv2.setMouseCallback(f'ROI Selection - {self.label}', self.click_event)
 
         # Instructions
         print("Click 4 points to define the ROI. Press 'q' when done.")
@@ -92,11 +95,11 @@ class Stream:
             display_frame = frame.copy()
             for point in self.roi_points:
                 cv2.circle(display_frame, point, 5, (0, 255, 0), -1)
-            cv2.imshow('ROI Selection', display_frame)
+            cv2.imshow(f'ROI Selection - {self.label}', display_frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        cv2.destroyWindow('ROI Selection')
+        cv2.destroyWindow(f'ROI Selection - {self.label}')
 
     def click_event(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -105,14 +108,17 @@ class Stream:
                 self.roi_polygon = np.array(self.roi_points, np.int32)
                 self.roi_polygon = self.roi_polygon.reshape((-1, 1, 2))
 
-
 class StreamThread(threading.Thread):
-    def __init__(self, stream:Stream,model):
+    def __init__(self, stream: Stream, model):
         threading.Thread.__init__(self)
         self.stream = stream
         self.model = model
 
     def run(self):
+        # Create a new event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
         while True:
             ret, frame = stream.getFrame()
             if not ret:
@@ -143,17 +149,17 @@ class StreamThread(threading.Thread):
                     if model.names[class_id] == 'car':
                         stream.current_counts.car += 1
                         cv2.rectangle(display_frame, (x1, y1), (x2, y2),
-                                    (0, 255, 0), 2)  # Green for cars
+                                      (0, 255, 0), 2)  # Green for cars
                         # lane = random.choice([1, 2])  # Randomly set lane
                     elif model.names[class_id] == 'bus':
                         stream.current_counts.bus += 1
                         cv2.rectangle(display_frame, (x1, y1), (x2, y2),
-                                    (255, 255, 0), 2)  # Blue for buses
+                                      (255, 255, 0), 2)  # Blue for buses
                         # lane = random.choice([1, 2])  # Randomly set lane
                     elif model.names[class_id] == 'motorcycle':
                         stream.current_counts.motorcycle += 1
                         cv2.rectangle(display_frame, (x1, y1), (x2, y2),
-                                    (0, 0, 255), 2)  # Red for motorcycles
+                                      (0, 0, 255), 2)  # Red for motorcycles
                         lane = 0  # Motorcycles use lane 1
                     if (model.names[class_id] == 'car' or model.names[class_id] == 'bus' or model.names[class_id] == 'motorcycle'):
                         # Randomly set willTurn
@@ -172,7 +178,7 @@ class StreamThread(threading.Thread):
                         }
                         if ((model.names[class_id] == 'car' and stream.current_counts.car > stream.prev_counts.car) or (model.names[class_id] == 'bus' and stream.current_counts.bus > stream.prev_counts.bus) or (model.names[class_id] == 'motorcycle' and stream.current_counts.motorcycle > stream.prev_counts.motorcycle)):
                             # Send data to WebSocket server
-                            asyncio.get_event_loop().run_until_complete(send_detection_data(detection_data))
+                            loop.run_until_complete(send_detection_data(detection_data))
 
             # Update total counts only if the current counts have changed
             if stream.current_counts.car > stream.prev_counts.car:
@@ -183,7 +189,7 @@ class StreamThread(threading.Thread):
                                             stream.prev_counts.bus)
             if stream.current_counts.motorcycle > stream.prev_counts.motorcycle:
                 stream.total_counts.motorcycle += (stream.current_counts.motorcycle -
-                                                stream.prev_counts.motorcycle)
+                                                   stream.prev_counts.motorcycle)
 
             # Update previous counts
             stream.prev_counts.car = stream.current_counts.car
@@ -192,14 +198,18 @@ class StreamThread(threading.Thread):
 
             # Predefine text positions and properties
             text_positions = [
-                (f'Total Cars: {stream.total_counts.car}', (10, 70), (0, 255, 0)),
-                (f'Total Buses: {stream.total_counts.bus}', (10, 150), (255, 255, 0)),
-                (f'Total Motorcycles: {stream.total_counts.motorcycle}', (10, 230), (0, 0, 255))
+                (f'Total Cars: {stream.total_counts.car}',
+                 (10, 70), (0, 255, 0)),
+                (f'Total Buses: {stream.total_counts.bus}',
+                 (10, 150), (255, 255, 0)),
+                (f'Total Motorcycles: {stream.total_counts.motorcycle}',
+                 (10, 230), (0, 0, 255))
             ]
 
             # Add counts to the frame
             for text, position, color in text_positions:
-                cv2.putText(display_frame, text, position, cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+                cv2.putText(display_frame, text, position,
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
             # Display result
             cv2.imshow(f'Vehicle Detection - {stream.label}', display_frame)
@@ -209,12 +219,12 @@ class StreamThread(threading.Thread):
 
 # Define streams
 stream1 = Stream(
-    "https://www.youtube.com/watch?v=jfKfPfyJRdk&pp=ygUKbGl2ZXN0cmVhbQ%3D%3D", "youtube", "YouTube")
+    "https://www.youtube.com/watch?v=oz46g45u80k", "youtube", "YouTube")
 stream2 = Stream(
     "http://118.22.23.185:80/SnapshotJPEG?Resolution=640x480&Quality=Clarity", "image", "Image")
 stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg", "mjpg", "MJPG")
 
-streams = [stream1,stream2]
+streams = [stream3,stream1]
 
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
@@ -226,101 +236,6 @@ for stream in streams:
     thread = StreamThread(stream, model)
     thread.start()
     threads.append(thread)
-
-while False:
-    for stream in streams:
-        ret, frame = stream.getFrame()
-        if not ret:
-            print("Failed to grab frame")
-            break
-
-        # Create a copy of the frame to draw on
-        display_frame = frame.copy()
-
-        # Draw ROI polygon
-        if stream.roi_polygon is not None:
-            cv2.polylines(display_frame, [
-                stream.roi_polygon], True, (255, 0, 0), 2)
-
-        # Perform detection
-        results = model(frame)
-
-        # Reset current counts for this frame
-        stream.current_counts = VehicleCounts()
-
-        for det in results.pred[0]:
-            class_id = int(det[5])
-            x1, y1, x2, y2 = map(int, det[:4])
-            center = ((x1 + x2) // 2, (y1 + y2) // 2)
-            lane = 0
-            # Check if the center of the object is in the ROI
-            if stream.roi_polygon is not None and cv2.pointPolygonTest(stream.roi_polygon, center, False) >= 0:
-                if model.names[class_id] == 'car':
-                    stream.current_counts.car += 1
-                    cv2.rectangle(display_frame, (x1, y1), (x2, y2),
-                                  (0, 255, 0), 2)  # Green for cars
-                    # lane = random.choice([1, 2])  # Randomly set lane
-                elif model.names[class_id] == 'bus':
-                    stream.current_counts.bus += 1
-                    cv2.rectangle(display_frame, (x1, y1), (x2, y2),
-                                  (255, 255, 0), 2)  # Blue for buses
-                    # lane = random.choice([1, 2])  # Randomly set lane
-                elif model.names[class_id] == 'motorcycle':
-                    stream.current_counts.motorcycle += 1
-                    cv2.rectangle(display_frame, (x1, y1), (x2, y2),
-                                  (0, 0, 255), 2)  # Red for motorcycles
-                    lane = 0  # Motorcycles use lane 1
-                if (model.names[class_id] == 'car' or model.names[class_id] == 'bus' or model.names[class_id] == 'motorcycle'):
-                    # Randomly set willTurn
-                    will_turn = random.choice([True, False])
-                    if (model.names[class_id] != 'motorcycle'):
-                        if (will_turn):
-                            lane = 2
-                        else:
-                            lane = random.choice([1, 2])
-                    # Create detection data
-                    detection_data = {
-                        "direction": 1,  # This could be updated based on your needs
-                        "lane": lane,
-                        "vehicleClass": model.names[class_id],
-                        "willTurn": will_turn
-                    }
-                    if ((model.names[class_id] == 'car' and stream.current_counts.car > stream.prev_counts.car) or (model.names[class_id] == 'bus' and stream.current_counts.bus > stream.prev_counts.bus) or (model.names[class_id] == 'motorcycle' and stream.current_counts.motorcycle > stream.prev_counts.motorcycle)):
-                        # Send data to WebSocket server
-                        asyncio.get_event_loop().run_until_complete(send_detection_data(detection_data))
-
-        # Update total counts only if the current counts have changed
-        if stream.current_counts.car > stream.prev_counts.car:
-            stream.total_counts.car += (stream.current_counts.car -
-                                        stream.prev_counts.car)
-        if stream.current_counts.bus > stream.prev_counts.bus:
-            stream.total_counts.bus += (stream.current_counts.bus -
-                                        stream.prev_counts.bus)
-        if stream.current_counts.motorcycle > stream.prev_counts.motorcycle:
-            stream.total_counts.motorcycle += (stream.current_counts.motorcycle -
-                                               stream.prev_counts.motorcycle)
-
-        # Update previous counts
-        stream.prev_counts.car = stream.current_counts.car
-        stream.prev_counts.bus = stream.current_counts.bus
-        stream.prev_counts.motorcycle = stream.current_counts.motorcycle
-
-        # Predefine text positions and properties
-        text_positions = [
-            (f'Total Cars: {stream.total_counts.car}', (10, 70), (0, 255, 0)),
-            (f'Total Buses: {stream.total_counts.bus}', (10, 150), (255, 255, 0)),
-            (f'Total Motorcycles: {stream.total_counts.motorcycle}', (10, 230), (0, 0, 255))
-        ]
-
-        # Add counts to the frame
-        for text, position, color in text_positions:
-            cv2.putText(display_frame, text, position, cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-
-        # Display result
-        cv2.imshow(f'Vehicle Detection - {stream.label}', display_frame)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
 
 # Wait for all threads to finish
 for thread in threads:
