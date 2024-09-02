@@ -12,7 +12,7 @@ import time
 # IP camera URL
 ip_camera_url = "http://118.22.23.185:80/SnapshotJPEG?Resolution=640x480&Quality=Clarity"
 ip_camera_url = "http://175.138.229.49:8082/cgi-bin/viewer/video.jpg"
-# ip_camera_url = "http: // 173.219.84.12: 8000/jpg/image.jpg"
+ip_camera_url = "http://173.219.84.12:8000/jpg/image.jpg"
 # Global variables
 roi_points = []
 roi_polygon = None
@@ -134,7 +134,7 @@ while True:
 
                 # Create detection data
                 detection_data = {
-                    "direction": 2,  # This could be updated based on your needs
+                    "direction": 3,  # This could be updated based on your needs
                     "lane": lane,
                     "vehicleClass": model.names[class_id],
                     "willTurn": will_turn
