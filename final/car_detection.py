@@ -176,7 +176,7 @@ class StreamThread(threading.Thread):
                             "lane": lane,
                             "vehicleClass": model.names[class_id],
                             "willTurn": will_turn,
-                            "label" : self.stream.label
+                            "label": self.stream.label
                         }
                         if ((model.names[class_id] == 'car' and self.stream.current_counts.car > self.stream.prev_counts.car) or (model.names[class_id] == 'bus' and self.stream.current_counts.bus > self.stream.prev_counts.bus) or (model.names[class_id] == 'motorcycle' and self.stream.current_counts.motorcycle > self.stream.prev_counts.motorcycle)):
                             # Send data to WebSocket server
@@ -186,13 +186,13 @@ class StreamThread(threading.Thread):
             # Update total counts only if the current counts have changed
             if self.stream.current_counts.car > self.stream.prev_counts.car:
                 self.stream.total_counts.car += (self.stream.current_counts.car -
-                                            self.stream.prev_counts.car)
+                                                 self.stream.prev_counts.car)
             if self.stream.current_counts.bus > self.stream.prev_counts.bus:
                 self.stream.total_counts.bus += (self.stream.current_counts.bus -
-                                            self.stream.prev_counts.bus)
+                                                 self.stream.prev_counts.bus)
             if self.stream.current_counts.motorcycle > self.stream.prev_counts.motorcycle:
                 self.stream.total_counts.motorcycle += (self.stream.current_counts.motorcycle -
-                                                   self.stream.prev_counts.motorcycle)
+                                                        self.stream.prev_counts.motorcycle)
 
             # Update previous counts
             self.stream.prev_counts.car = self.stream.current_counts.car
@@ -215,10 +215,12 @@ class StreamThread(threading.Thread):
                             cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
             # Display result
-            cv2.imshow(f'Vehicle Detection - {self.stream.label}', display_frame)
+            cv2.imshow(
+                f'Vehicle Detection - {self.stream.label}', display_frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                print(f'\033[91mThread for {self.stream.label} stopped\033[0m')  # Red text
+                # Red text
+                print(f'\033[91mThread for {self.stream.label} stopped\033[0m')
                 break
 
 
@@ -229,7 +231,7 @@ stream2 = Stream(
     "http://118.22.23.185:80/SnapshotJPEG?Resolution=640x480&Quality=Clarity", "image", "Image")
 stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg", "mjpg", "MJPG")
 
-streams = [stream3, stream1]
+streams = [stream1, stream2,stream3]
 
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
