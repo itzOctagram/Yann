@@ -1,32 +1,16 @@
-import cv2
-import numpy as np
-import torch
-import yolov5
-import asyncio
-import websockets
-import json
 import random
-import requests
-import time
+import json
+import websockets
+import asyncio
+import yolov5
+import torch
+import numpy as np
+import cv2
 
-# IP camera URL
-ip_camera_url = "http://118.22.23.185:80/SnapshotJPEG?Resolution=640x480&Quality=Clarity"
-ip_camera_url = "http://175.138.229.49:8082/cgi-bin/viewer/video.jpg"
-# ip_camera_url = "http: // 173.219.84.12: 8000/jpg/image.jpg"
+
 # Global variables
 roi_points = []
 roi_polygon = None
-
-
-def get_image_from_url(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        image_array = np.frombuffer(response.content, dtype=np.uint8)
-        image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
-        return image
-    else:
-        print(f"Failed to retrieve image. Status code: {response.status_code}")
-        return None
 
 
 def click_event(event, x, y, flags, param):
@@ -39,16 +23,19 @@ def click_event(event, x, y, flags, param):
 
 
 async def send_detection_data(data):
-    async with websockets.connect("ws://localhost:8765/sender1") as websocket:
+    async with websockets.connect("ws://localhost:8765/sender") as websocket:
         await websocket.send(json.dumps(data))
         print(f"Sent data: {data}")
 
 # Load YOLO model
 model = yolov5.load('yolov5s.pt')
 
+# Open video stream
+cap = cv2.VideoCapture('http://90.146.10.190:80/mjpg/video.mjpg')
+
 # Read first frame to set up ROI selection
-frame = get_image_from_url(ip_camera_url)
-if frame is None:
+ret, frame = cap.read()
+if not ret:
     print("Failed to grab first frame")
     exit()
 
@@ -68,7 +55,7 @@ while len(roi_points) < 4:
 
 cv2.destroyWindow('ROI Selection')
 
-# Initialize vehicle counts
+# Initialize car, bus, and motorcycle counts
 current_car_count = 0
 total_car_count = 0
 current_bus_count = 0
@@ -82,9 +69,9 @@ prev_bus_count = 0
 prev_motorcycle_count = 0
 
 while True:
-    frame = get_image_from_url(ip_camera_url)
-    if frame is None:
-        continue
+    ret, frame = cap.read()
+    if not ret:
+        break
 
     # Create a copy of the frame to draw on
     display_frame = frame.copy()
@@ -106,43 +93,39 @@ while True:
         x1, y1, x2, y2 = map(int, det[:4])
         center = ((x1 + x2) // 2, (y1 + y2) // 2)
         lane = 0
-
         # Check if the center of the object is in the ROI
         if roi_polygon is not None and cv2.pointPolygonTest(roi_polygon, center, False) >= 0:
             if model.names[class_id] == 'car':
                 current_car_count += 1
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2),
                               (0, 255, 0), 2)  # Green for cars
+                # lane = random.choice([1, 2])  # Randomly set lane
             elif model.names[class_id] == 'bus':
                 current_bus_count += 1
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2),
                               (255, 255, 0), 2)  # Blue for buses
+                # lane = random.choice([1, 2])  # Randomly set lane
             elif model.names[class_id] == 'motorcycle':
                 current_motorcycle_count += 1
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2),
                               (0, 0, 255), 2)  # Red for motorcycles
                 lane = 0  # Motorcycles use lane 1
-
-            if model.names[class_id] in ['car', 'bus', 'motorcycle']:
+            if (model.names[class_id] == 'car' or model.names[class_id] == 'bus' or model.names[class_id] == 'motorcycle'):
                 # Randomly set willTurn
                 will_turn = random.choice([True, False])
-                if model.names[class_id] != 'motorcycle':
-                    if will_turn:
+                if (model.names[class_id] != 'motorcycle'):
+                    if (will_turn):
                         lane = 2
                     else:
                         lane = random.choice([1, 2])
-
                 # Create detection data
                 detection_data = {
-                    "direction": 2,  # This could be updated based on your needs
+                    "direction": 3,  # This could be updated based on your needs
                     "lane": lane,
                     "vehicleClass": model.names[class_id],
                     "willTurn": will_turn
                 }
-
-                if ((model.names[class_id] == 'car' and current_car_count > prev_car_count) or
-                    (model.names[class_id] == 'bus' and current_bus_count > prev_bus_count) or
-                        (model.names[class_id] == 'motorcycle' and current_motorcycle_count > prev_motorcycle_count)):
+                if ((model.names[class_id] == 'car' and current_car_count > prev_car_count) or (model.names[class_id] == 'bus' and current_bus_count > prev_bus_count) or (model.names[class_id] == 'motorcycle' and current_motorcycle_count > prev_motorcycle_count)):
                     # Send data to WebSocket server
                     asyncio.get_event_loop().run_until_complete(send_detection_data(detection_data))
 
@@ -174,7 +157,5 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-    # Wait for a short time before requesting the next image
-    time.sleep(0.1)  # Adjust this value to control the refresh rate
-
+cap.release()
 cv2.destroyAllWindows()
