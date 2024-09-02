@@ -232,6 +232,7 @@ stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg", "mjpg", "MJPG")
 stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg", "MJPG1")
 stream5 = Stream(
     "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2")
+stream6 = Stream("http://185.137.146.14:80/mjpg/video.mjpg", "mjpg", "MJPG3")
 
 streams = [stream5, stream4, stream3]
 
