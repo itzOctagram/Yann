@@ -6,6 +6,7 @@ import streamlink
 import asyncio
 import websockets
 import json
+import torch
 import random
 import warnings
 import requests
@@ -24,6 +25,13 @@ def generate_random_string(length=6):
     characters = string.ascii_letters + string.digits
     random_string = ''.join(random.choices(characters, k=length))
     return random_string
+
+
+# Assuming the frame is Matlike object
+def preprocess_frame(frame, size=(640, 640)):
+    # Resize the frame to the expected size
+    resized_frame = cv2.resize(frame, size)
+    return resized_frame
 
 
 class VehicleCounts:
@@ -141,6 +149,7 @@ class StreamThread(threading.Thread):
                     self.stream.roi_polygon], True, (255, 0, 0), 2)
 
             # Perform detection
+            # frame = preprocess_frame(frame)
             results = model(frame)
 
             # Reset current counts for this frame
@@ -251,7 +260,7 @@ stream10 = Stream(
 stream11 = Stream("http://82.76.145.217:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
                   "mjpg", "MJPG7")  # Heavy traffic
 
-streams = [stream5, stream4, stream3]
+streams = [stream5, stream4, stream3,stream6]
 
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
