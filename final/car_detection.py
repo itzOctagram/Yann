@@ -6,7 +6,7 @@ import streamlink
 import asyncio
 import websockets
 import json
-import torch
+import time
 import random
 import warnings
 import requests
@@ -30,8 +30,27 @@ def generate_random_string(length=6):
 # Assuming the frame is Matlike object
 def preprocess_frame(frame, size=(640, 640)):
     # Resize the frame to the expected size
+    original_size = frame.shape[1], frame.shape[0]  # (width, height)
     resized_frame = cv2.resize(frame, size)
-    return resized_frame
+    return resized_frame, original_size
+
+
+def postprocess_detections(detections, original_size, resized_size=(640, 640)):
+    original_width, original_height = original_size
+    resized_width, resized_height = resized_size
+    scale_x = original_width / resized_width
+    scale_y = original_height / resized_height
+
+    # Clone the detections tensor to allow in-place operations
+    detections = detections.clone()
+
+    for det in detections:
+        det[0] *= scale_x
+        det[1] *= scale_y
+        det[2] *= scale_x
+        det[3] *= scale_y
+
+    return detections
 
 
 class VehicleCounts:
@@ -55,6 +74,7 @@ class Stream:
     total_counts: VehicleCounts
     current_counts: VehicleCounts
     prev_counts: VehicleCounts
+    camNumber: int
 
     def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}"):
         self.url = url
@@ -67,30 +87,43 @@ class Stream:
         self.current_counts = VehicleCounts()
         self.prev_counts = VehicleCounts()
 
-    def getFrame(self):
+    def getFrame(self, retry_interval=1, max_retries=5):
         print(f"Getting frame {self.label}")
-        if (self.cap != None) and (self.type != "image"):
-            return self.cap.read()
 
-        if (self.type == "youtube"):
-            streams = streamlink.streams(self.url)
-            stream_url = streams['best'].url
-            cap = cv2.VideoCapture(stream_url)
+        retry_count = max_retries
+        ret, frame = (False, None)
+        while retry_count > 0:
 
-        elif (self.type == "image"):
-            response = requests.get(self.url)
-            if response.status_code == 200:
-                image_array = np.frombuffer(response.content, dtype=np.uint8)
-                image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
-                return (response.status_code == 200, image)
+            if (self.cap != None) and (self.type != "image"):
+                ret, frame = self.cap.read()
+            elif (self.type == "youtube"):
+                streams = streamlink.streams(self.url)
+                stream_url = streams['best'].url
+                self.cap = cv2.VideoCapture(stream_url)
+                ret, frame = self.cap.read()
+            elif (self.type == "image"):
+                response = requests.get(self.url)
+                if response.status_code == 200:
+                    image_array = np.frombuffer(
+                        response.content, dtype=np.uint8)
+                    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+                    ret, frame = (response.status_code == 200, image)
+                else:
+                    ret, frame = (response.status_code == 200, None)
+            elif (self.type == "mjpg"):
+                self.cap = cv2.VideoCapture(self.url)
+                ret, frame = self.cap.read()
             else:
-                return (response.status_code == 200, None)
+                ret, frame = (False, None)
 
-        elif (self.type == "mjpg"):
-            cap = cv2.VideoCapture(self.url)
+            if not ret:
+                print(f"Failed to grab frame from {self.label}. Retrying...")
+                time.sleep(retry_interval)
+                retry_count -= 1
+            else:
+                break
 
-        self.cap = cap
-        return cap.read()
+        return (ret, frame)
 
     def selectROI(self):
         ret, frame = self.getFrame()
@@ -136,7 +169,7 @@ class StreamThread(threading.Thread):
 
         while True:
             ret, frame = self.stream.getFrame()
-            if not ret:
+            if not ret or frame is None:
                 print("Failed to grab frame")
                 break
 
@@ -149,13 +182,16 @@ class StreamThread(threading.Thread):
                     self.stream.roi_polygon], True, (255, 0, 0), 2)
 
             # Perform detection
-            # frame = preprocess_frame(frame)
+            frame, original_size = preprocess_frame(frame)
             results = model(frame)
+
+            # Post-process detections to scale them back to the original frame size
+            detections = postprocess_detections(results.pred[0], original_size)
 
             # Reset current counts for this frame
             self.stream.current_counts = VehicleCounts()
 
-            for det in results.pred[0]:
+            for det in detections:
                 class_id = int(det[5])
                 x1, y1, x2, y2 = map(int, det[:4])
                 center = ((x1 + x2) // 2, (y1 + y2) // 2)
@@ -187,11 +223,11 @@ class StreamThread(threading.Thread):
                                 lane = random.choice([1, 2])
                         # Create detection data
                         detection_data = {
-                            "direction": 1,  # This could be updated based on your needs
+                            "direction": self.stream.camNumber,  # This could be updated based on your needs
                             "lane": lane,
                             "vehicleClass": model.names[class_id],
                             "willTurn": will_turn,
-                            "label": self.stream.label
+                            "label": self.stream.label,
                         }
                         if ((model.names[class_id] == 'car' and self.stream.current_counts.car > self.stream.prev_counts.car) or (model.names[class_id] == 'bus' and self.stream.current_counts.bus > self.stream.prev_counts.bus) or (model.names[class_id] == 'motorcycle' and self.stream.current_counts.motorcycle > self.stream.prev_counts.motorcycle)):
                             # Send data to WebSocket server
@@ -244,7 +280,8 @@ stream1 = Stream(
     "https://www.youtube.com/watch?v=oz46g45u80k", "youtube", "YouTube")
 stream2 = Stream(
     "http://81.60.215.31/cgi-bin/viewer/video.jpg", "image", "Image")
-stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg", "mjpg", "MJPG")
+stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
+                 "mjpg", "MJPG")  # Bogota,Columbia
 stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg", "MJPG1")
 stream5 = Stream(
     "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2")
@@ -260,14 +297,16 @@ stream10 = Stream(
 stream11 = Stream("http://82.76.145.217:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
                   "mjpg", "MJPG7")  # Heavy traffic
 
-streams = [stream5, stream4, stream3,stream6]
+streams = [stream9, stream10, stream11, stream3]  # Use 4 streams at maximum
 
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
 
 # Create and start threads for each stream
 threads = []
-for stream in streams:
+for i in range(len(streams)):
+    stream = streams[i]
+    stream.camNumber = i % 4
     stream.selectROI()
     thread = StreamThread(stream, model)
     threads.append(thread)
