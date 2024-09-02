@@ -10,6 +10,7 @@ import random
 import warnings
 import requests
 import threading
+import string
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
@@ -17,6 +18,12 @@ async def send_detection_data(data):
     async with websockets.connect("ws://localhost:8765/sender") as websocket:
         await websocket.send(json.dumps(data))
         print(f"Sent data: {data}")
+
+
+def generate_random_string(length=6):
+    characters = string.ascii_letters + string.digits
+    random_string = ''.join(random.choices(characters, k=length))
+    return random_string
 
 
 class VehicleCounts:
@@ -41,7 +48,7 @@ class Stream:
     current_counts: VehicleCounts
     prev_counts: VehicleCounts
 
-    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = "Camera"):
+    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}"):
         self.url = url
         self.type = type
         self.label = label
@@ -233,11 +240,16 @@ stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg", "MJPG1")
 stream5 = Stream(
     "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2")
 stream6 = Stream("http://185.137.146.14:80/mjpg/video.mjpg", "mjpg", "MJPG3")
-stream7 = Stream("http://79.10.24.158:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG4")
-stream8 = Stream("http://72.24.198.180:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG5")
-stream9 = Stream("http://125.17.248.94:8080/cgi-bin/viewer/video.jpg", "image", "Image1") # Mumbai
-stream10 = Stream("http://50.252.166.122:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG6")
-stream11 = Stream("http://82.76.145.217:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG7") # Heavy traffic
+stream7 = Stream(
+    "http://79.10.24.158:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG4")
+stream8 = Stream(
+    "http://72.24.198.180:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG5")
+stream9 = Stream("http://125.17.248.94:8080/cgi-bin/viewer/video.jpg",
+                 "image", "Image1")  # Mumbai
+stream10 = Stream(
+    "http://50.252.166.122:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG6")
+stream11 = Stream("http://82.76.145.217:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
+                  "mjpg", "MJPG7")  # Heavy traffic
 
 streams = [stream5, stream4, stream3]
 
