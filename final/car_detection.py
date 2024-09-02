@@ -227,10 +227,13 @@ class StreamThread(threading.Thread):
 stream1 = Stream(
     "https://www.youtube.com/watch?v=oz46g45u80k", "youtube", "YouTube")
 stream2 = Stream(
-    "http://118.22.23.185:80/SnapshotJPEG?Resolution=640x480&Quality=Clarity", "image", "Image")
+    "http://81.60.215.31/cgi-bin/viewer/video.jpg", "image", "Image")
 stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg", "mjpg", "MJPG")
+stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg", "MJPG1")
+stream5 = Stream(
+    "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2")
 
-streams = [stream1, stream2,stream3]
+streams = [stream5, stream4, stream3]
 
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
