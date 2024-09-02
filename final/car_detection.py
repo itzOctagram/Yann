@@ -10,7 +10,6 @@ import random
 import warnings
 import requests
 import threading
-import asyncio
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
