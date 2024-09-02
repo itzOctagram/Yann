@@ -1,18 +1,14 @@
-# server.py
 import asyncio
-import websockets
 import json
+import websockets
 
-# Store connected clients
 clients = {
     'sender': None,
     'receiver': None,
-    'sender1': None,
+    'sender1': None
 }
 
-
 async def handler(websocket, path):
-    # Assign the client to either sender or receiver based on path
     if path == "/sender":
         clients['sender'] = websocket
     elif path == "/receiver":
@@ -38,5 +34,9 @@ async def handler(websocket, path):
 
 start_server = websockets.serve(handler, "localhost", 8765)
 
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+async def main():
+    await start_server
+    print("\033[92mServer started and ready at ws://localhost:8765\033[0m")
+    await asyncio.Future()  # Run forever
+
+asyncio.get_event_loop().run_until_complete(main())
