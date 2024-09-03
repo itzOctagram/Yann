@@ -1,0 +1,7 @@
+1. state = number of vehicles and their types on each direction,
+2. action = traffic cycle
+3.reward = 1/(max vehicle wait time) [minimize the max vehicle wait time]
+4. q_value = function(state,action)=>{
+        time = cycle_Completion_Time(state,action)
+        return 1/time
+    }
