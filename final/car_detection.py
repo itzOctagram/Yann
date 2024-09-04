@@ -13,11 +13,10 @@ import requests
 import threading
 import string
 warnings.filterwarnings("ignore", category=FutureWarning)
-uri = "ws://0.tcp.in.ngrok.io:14349/sender"
 
 
 async def send_detection_data(data):
-    async with websockets.connect(uri) as websocket:
+    async with websockets.connect("ws://0.tcp.in.ngrok.io:14349/sender") as websocket:
         await websocket.send(json.dumps(data))
         print(f"Sent data: {data}")
 
@@ -151,11 +150,9 @@ class Stream:
     def click_event(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.roi_points.append((x, y))
-
-    def setROI_Polygon(self):
-        print(f'\033[92mRoi Points {self.roi_points}\033[0m')
-        self.roi_polygon = np.array(self.roi_points, np.int32)
-        self.roi_polygon = self.roi_polygon.reshape((-1, 1, 2))
+            if len(self.roi_points) == 4:
+                self.roi_polygon = np.array(self.roi_points, np.int32)
+                self.roi_polygon = self.roi_polygon.reshape((-1, 1, 2))
 
 
 class StreamThread(threading.Thread):
@@ -291,7 +288,8 @@ stream2 = Stream(
 stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
                  "mjpg", "MJPG")  # Bogota,Columbia
 stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg",
-                 "mjpg", "MJPG1")  # Russia
+                 "mjpg",
+                 "MJPG1")   # Russia
 stream5 = Stream(
     "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2",)
 stream6 = Stream("http://185.137.146.14:80/mjpg/video.mjpg", "mjpg", "MJPG3")
@@ -311,11 +309,13 @@ stream13 = Stream("http://103.217.216.197:8001/jpg/image.jpg",
                   "image", "Image2")  # Bekasi, Indonesia
 stream14 = Stream("http://90.146.10.190:80/mjpg/video.mjpg",
                   "mjpg", "MJPG9")  # Linz, Austria
-stream15 = Stream("http://210.166.46.180:80/-wvhttp-01-/GetOneShot?image_size=640x480&frame_count=1000000000",
-                  "mjpg", "MJPG10")  # Seoul, South Korea
+stream15 = Stream(
+    "http://210.166.46.180:80/-wvhttp-01-/GetOneShot?image_size=640x480&frame_count=1000000000", "mjpg", "MJPG10") # Tokyo, Japan
+stream16 = Stream(
+    "http://175.138.229.49:8082/cgi-bin/viewer/video.jpg?r=1725431504", "image", "Image3")
 
-streams = [stream5, stream15]
-streams1 = [stream14]
+streams = [stream5, stream11, stream16, stream4]  # Use 4 streams at maximum
+
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
 
