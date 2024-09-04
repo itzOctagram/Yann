@@ -309,8 +309,8 @@ stream13 = Stream("http://103.217.216.197:8001/jpg/image.jpg",
 stream14 = Stream("http://90.146.10.190:80/mjpg/video.mjpg",
                   "mjpg", "MJPG9")  # Linz, Austria
 
-streams = [stream5, stream9, stream14]  # Use 4 streams at maximum
-streams1 = [stream14]
+streams1 = [stream5, stream11, stream14, stream3]  # Use 4 streams at maximum
+streams = [stream14]
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
 
