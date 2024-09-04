@@ -77,12 +77,12 @@ class Stream:
     prev_counts: VehicleCounts
     camNumber: int
 
-    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}"):
+    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}",roi_points: list = []):
         self.url = url
         self.type = type
         self.label = label
         self.cap = None
-        self.roi_points = []
+        self.roi_points = roi_points
         self.roi_polygon = None
         self.total_counts = VehicleCounts()
         self.current_counts = VehicleCounts()
@@ -151,9 +151,11 @@ class Stream:
     def click_event(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.roi_points.append((x, y))
-            if len(self.roi_points) == 4:
-                self.roi_polygon = np.array(self.roi_points, np.int32)
-                self.roi_polygon = self.roi_polygon.reshape((-1, 1, 2))
+
+    def setROI_Polygon(self):
+        print(f'\033[92mRoi Points {self.roi_points}\033[0m')
+        self.roi_polygon = np.array(self.roi_points, np.int32)
+        self.roi_polygon = self.roi_polygon.reshape((-1, 1, 2))
 
 
 class StreamThread(threading.Thread):
@@ -288,7 +290,7 @@ stream2 = Stream(
     "http://81.60.215.31/cgi-bin/viewer/video.jpg", "image", "Image")
 stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
                  "mjpg", "MJPG")  # Bogota,Columbia
-stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg", "MJPG1")
+stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg", "MJPG1") # Russia
 stream5 = Stream(
     "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2")
 stream6 = Stream("http://185.137.146.14:80/mjpg/video.mjpg", "mjpg", "MJPG3")
@@ -309,8 +311,8 @@ stream13 = Stream("http://103.217.216.197:8001/jpg/image.jpg",
 stream14 = Stream("http://90.146.10.190:80/mjpg/video.mjpg",
                   "mjpg", "MJPG9")  # Linz, Austria
 
-streams = [stream5, stream9, stream14]  # Use 4 streams at maximum
-streams1 = [stream14]
+streams1 = [stream5, stream14, stream11]
+streams = [stream14]
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
 
@@ -319,7 +321,9 @@ threads = []
 for i in range(len(streams)):
     stream = streams[i]
     stream.camNumber = i % 4
-    stream.selectROI()
+    if (len(stream.roi_points) < 4):
+        stream.selectROI()
+    stream.setROI_Polygon()
     thread = StreamThread(stream, model)
     threads.append(thread)
 
