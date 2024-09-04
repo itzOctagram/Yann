@@ -13,10 +13,11 @@ import requests
 import threading
 import string
 warnings.filterwarnings("ignore", category=FutureWarning)
+uri = "ws://0.tcp.in.ngrok.io:14349/sender"
 
 
 async def send_detection_data(data):
-    async with websockets.connect("ws://localhost:8765/sender") as websocket:
+    async with websockets.connect(uri) as websocket:
         await websocket.send(json.dumps(data))
         print(f"Sent data: {data}")
 
@@ -296,9 +297,15 @@ stream10 = Stream(
     "http://50.252.166.122:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG6")
 stream11 = Stream("http://82.76.145.217:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
                   "mjpg", "MJPG7")  # Heavy traffic
+stream12 = Stream("http://80.160.138.86:80/mjpg/video.mjpg",
+                  "mjpg", "MJPG8")  # Jakarta
+stream13 = Stream("http://103.217.216.197:8001/jpg/image.jpg",
+                  "image", "Image2")  # Bekasi, Indonesia
+stream14 = Stream("http://90.146.10.190:80/mjpg/video.mjpg",
+                  "mjpg", "MJPG9")  # Linz, Austria
 
-streams = [stream9, stream10, stream11, stream3]  # Use 4 streams at maximum
-
+streams = [stream5, stream9, stream14]  # Use 4 streams at maximum
+streams1 = [stream14]
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
 
