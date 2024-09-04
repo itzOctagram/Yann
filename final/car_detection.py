@@ -222,6 +222,11 @@ class StreamThread(threading.Thread):
                                 lane = 2
                             else:
                                 lane = random.choice([1, 2])
+                        else:
+                            if (will_turn):
+                                lane = 2
+                            else:
+                                lane = 0
                         # Create detection data
                         detection_data = {
                             "direction": self.stream.camNumber,  # This could be updated based on your needs
