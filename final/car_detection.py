@@ -77,7 +77,7 @@ class Stream:
     prev_counts: VehicleCounts
     camNumber: int
 
-    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}",roi_points: list = []):
+    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}", roi_points: list = []):
         self.url = url
         self.type = type
         self.label = label
@@ -290,7 +290,8 @@ stream2 = Stream(
     "http://81.60.215.31/cgi-bin/viewer/video.jpg", "image", "Image")
 stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
                  "mjpg", "MJPG")  # Bogota,Columbia
-stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg", "MJPG1") # Russia
+stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg",
+                 "MJPG1", [(504, 253), (614, 250), (623, 393), (330, 392)])  # Russia
 stream5 = Stream(
     "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2")
 stream6 = Stream("http://185.137.146.14:80/mjpg/video.mjpg", "mjpg", "MJPG3")
@@ -310,9 +311,12 @@ stream13 = Stream("http://103.217.216.197:8001/jpg/image.jpg",
                   "image", "Image2")  # Bekasi, Indonesia
 stream14 = Stream("http://90.146.10.190:80/mjpg/video.mjpg",
                   "mjpg", "MJPG9")  # Linz, Austria
+# Tokyo, Japan
+stream15 = Stream(
+    "http://220.254.72.200:80/cgi-bin/camera?resolution=640&amp;quality=1&amp;Language=0&amp;1725428245", "image", "Image3")
 
-streams1 = [stream5, stream11, stream14, stream3]  # Use 4 streams at maximum
-streams = [stream14]
+streams = [stream5, stream11, stream14, stream3]  # Use 4 streams at maximum
+streams1 = [stream15]
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
 
