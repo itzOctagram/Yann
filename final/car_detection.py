@@ -77,12 +77,12 @@ class Stream:
     prev_counts: VehicleCounts
     camNumber: int
 
-    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}",roi_points: list = []):
+    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}", roi_points: list = None):
         self.url = url
         self.type = type
         self.label = label
         self.cap = None
-        self.roi_points = roi_points
+        self.roi_points = roi_points if roi_points is not None else []
         self.roi_polygon = None
         self.total_counts = VehicleCounts()
         self.current_counts = VehicleCounts()
@@ -290,13 +290,14 @@ stream2 = Stream(
     "http://81.60.215.31/cgi-bin/viewer/video.jpg", "image", "Image")
 stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
                  "mjpg", "MJPG")  # Bogota,Columbia
-stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg", "mjpg", "MJPG1") # Russia
+stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg",
+                 "mjpg", "MJPG1")  # Russia
 stream5 = Stream(
-    "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2")
+    "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2",)
 stream6 = Stream("http://185.137.146.14:80/mjpg/video.mjpg", "mjpg", "MJPG3")
-stream7 = Stream(
+_stream7 = Stream(
     "http://79.10.24.158:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG4")
-stream8 = Stream(
+_stream8 = Stream(
     "http://72.24.198.180:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG5")
 stream9 = Stream("http://125.17.248.94:8080/cgi-bin/viewer/video.jpg",
                  "image", "Image1")  # Mumbai
@@ -304,28 +305,28 @@ stream10 = Stream(
     "http://50.252.166.122:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG6")
 stream11 = Stream("http://82.76.145.217:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
                   "mjpg", "MJPG7")  # Heavy traffic
-stream12 = Stream("http://80.160.138.86:80/mjpg/video.mjpg",
-                  "mjpg", "MJPG8")  # Jakarta
+_stream12 = Stream("http://80.160.138.86:80/mjpg/video.mjpg",
+                   "mjpg", "MJPG8")  # Jakarta
 stream13 = Stream("http://103.217.216.197:8001/jpg/image.jpg",
                   "image", "Image2")  # Bekasi, Indonesia
 stream14 = Stream("http://90.146.10.190:80/mjpg/video.mjpg",
                   "mjpg", "MJPG9")  # Linz, Austria
+stream15 = Stream("http://210.166.46.180:80/-wvhttp-01-/GetOneShot?image_size=640x480&frame_count=1000000000",
+                  "mjpg", "MJPG10")  # Seoul, South Korea
 
-streams1 = [stream5, stream14, stream11]
-streams = [stream14]
+streams = [stream5, stream15]
+streams1 = [stream14]
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
 
 # Create and start threads for each stream
 threads = []
 for i in range(len(streams)):
-    stream = streams[i]
-    stream.camNumber = i % 4
-    if (len(stream.roi_points) < 4):
-        stream.selectROI()
-    stream.setROI_Polygon()
-    thread = StreamThread(stream, model)
-    threads.append(thread)
+    streams[i].camNumber = i % 4
+    if (streams[i].roi_points == []):
+        streams[i].selectROI()
+    streams[i].setROI_Polygon()
+    threads.append(StreamThread(streams[i], model))
 
 # Start all threads
 for thread in threads:
