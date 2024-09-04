@@ -500,7 +500,7 @@ def simulationTime():
 #     asyncio.get_event_loop().run_forever()
 
 async def generateVehicles():
-    uri = "ws://localhost:8765/receiver"
+    uri = "ws://0.tcp.in.ngrok.io:14349/receiver"
     async with websockets.connect(uri) as websocket:
         async for message in websocket:
             vehicle_data = json.loads(message)

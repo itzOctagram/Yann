@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 async def send_detection_data(data):
-    async with websockets.connect("ws://localhost:8765/sender") as websocket:
+    async with websockets.connect("ws://0.tcp.in.ngrok.io:14349/sender") as websocket:
         await websocket.send(json.dumps(data))
         print(f"Sent data: {data}")
 
@@ -221,6 +221,11 @@ class StreamThread(threading.Thread):
                                 lane = 2
                             else:
                                 lane = random.choice([1, 2])
+                        else:
+                            if (will_turn):
+                                lane = 2
+                            else:
+                                lane = 0
                         # Create detection data
                         detection_data = {
                             "direction": self.stream.camNumber,  # This could be updated based on your needs
