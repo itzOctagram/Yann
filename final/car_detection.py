@@ -310,7 +310,7 @@ stream13 = Stream("http://103.217.216.197:8001/jpg/image.jpg",
 stream14 = Stream("http://90.146.10.190:80/mjpg/video.mjpg",
                   "mjpg", "MJPG9")  # Linz, Austria
 stream15 = Stream(
-    "http://210.166.46.180:80/-wvhttp-01-/GetOneShot?image_size=640x480&frame_count=1000000000", "mjpg", "MJPG10") # Tokyo, Japan
+    "http://210.166.46.180:80/-wvhttp-01-/GetOneShot?image_size=640x480&frame_count=1000000000", "mjpg", "MJPG10")  # Tokyo, Japan
 stream16 = Stream(
     "http://175.138.229.49:8082/cgi-bin/viewer/video.jpg?r=1725431504", "image", "Image3")
 
