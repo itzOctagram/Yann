@@ -1,5 +1,18 @@
 import pygame
 from typing import Literal, Tuple
+import math
+
+
+class TurnInfo:
+    turning: bool
+    destination: int
+    turnRate: int
+
+    def __init__(self, turning: bool, destination: int, turnRate: int):
+        self.turning = turning
+        self.destination = destination
+        self.turnRate = turnRate
+
 
 class Vehicle:
     type: Literal['car', 'bus', 'bike']
@@ -7,19 +20,25 @@ class Vehicle:
     # left - sharp turn, right - moderate turn
     turnDirection: Literal['left', 'right', 'straight']
     speed: Tuple[int, int]
+    angle: int
+    turn: TurnInfo
     location: Tuple[int, int]
     image: pygame.Surface
 
     def __init__(self, type: Literal['car', 'bus', 'bike'], direction: Literal['up', 'down', 'left', 'right'], turnDirection: Literal['left', 'right', 'straight'] = 'straight'):
+        direction_to_angle = {'right': 0, 'up': 90, 'left': 180, 'down': 270}
+
         self.type = type
         self.direction = direction
         self.turnDirection = turnDirection
         self.speed = 0
+        self.angle = direction_to_angle[direction]
+        self.turn = TurnInfo(False, 0, 0)
         self.setStartLocation()
-        self.image = pygame.image.load(f'./images/{direction}/{type}.png')
+        self.image = pygame.image.load(f'images/right/{type}.png')
 
     def getMaxSpeed(self):
-        maxSpeed = {'car': 50, 'bus': 30, 'bike': 70}
+        maxSpeed = {'car': 75, 'bus': 45, 'bike': 105}
         return maxSpeed[self.type]
 
     def getAcceleration(self):
@@ -51,28 +70,53 @@ class Vehicle:
         acceleration = self.getAcceleration()
         self.speed += acceleration*dt
 
-        if(self.speed > self.getMaxSpeed()):
+        if (self.speed > self.getMaxSpeed()):
             self.speed = self.getMaxSpeed()
-        elif(self.speed < 0):
+        elif (self.speed < 0):
             self.speed = 0
-        
-        if self.direction == 'up':
-            self.location = (self.location[0], self.location[1] - speed*dt)
-        elif self.direction == 'down':
-            self.location = (self.location[0], self.location[1] + speed*dt)
-        elif self.direction == 'left':
-            self.location = (self.location[0] - speed*dt, self.location[1])
-        elif self.direction == 'right':
-            self.location = (self.location[0] + speed*dt, self.location[1])
+
+        angle_rad = math.radians(self.angle)
+        # Calculate the change in x and y coordinates
+        delta_x = speed * dt * math.cos(angle_rad)
+        delta_y = speed * dt * math.sin(angle_rad)
+
+        # Update the location
+        self.location = (self.location[0] + delta_x,
+                         self.location[1] - delta_y)
+
+        if (self.turn.turning):
+            angle_diff = (self.turn.destination - self.angle) % 360
+            if angle_diff > 180:
+                angle_diff -= 360
+
+            # Determine the turn rate
+            turn_rate = self.turn.turnRate * dt
+
+            # Adjust the angle
+            if angle_diff > 0:
+                self.angle += min(turn_rate, angle_diff)
+            else:
+                self.angle -= min(turn_rate, -angle_diff)
+
+            # Normalize the angle to be within [0, 360)
+            self.angle %= 360
+
+            # Check if the angle has reached the destination
+            if abs(angle_diff) <= turn_rate:
+                self.angle = self.turn.destination
+                self.turn.turning = False
+
+    def setTurn(self, angle: int, turnRate: int = 3):
+        self.turn = TurnInfo(True, self.angle + angle, turnRate)
+
 
 class Simulation:
     vehicles: list[Vehicle]
 
-    
-
 
 vehicles = [Vehicle('car', 'up'), Vehicle('car', 'down'),
             Vehicle('car', 'left'), Vehicle('car', 'right')]
+vehicles[0].setTurn(90, 10)
 
 if __name__ == "__main__":
     pygame.init()
@@ -101,7 +145,8 @@ if __name__ == "__main__":
         screen.blit(scaled_background, (0, 0))
 
         for vehicle in vehicles:
-            screen.blit(vehicle.image, vehicle.location)
+            screen.blit(pygame.transform.rotate(
+                vehicle.image, vehicle.angle), vehicle.location)
 
         pygame.display.flip()
         dt = clock.tick(60)/1000
