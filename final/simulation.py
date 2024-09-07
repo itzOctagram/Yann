@@ -1,7 +1,6 @@
 import pygame
 from typing import Literal, Tuple
 
-
 class Vehicle:
     type: Literal['car', 'bus', 'bike']
     direction: Literal['up', 'down', 'left', 'right']
@@ -15,16 +14,16 @@ class Vehicle:
         self.type = type
         self.direction = direction
         self.turnDirection = turnDirection
-        self.speed = self.getMaxSpeed()
+        self.speed = 0
         self.setStartLocation()
         self.image = pygame.image.load(f'./images/{direction}/{type}.png')
 
     def getMaxSpeed(self):
-        maxSpeed = {'car': 5, 'bus': 3, 'bike': 7}
+        maxSpeed = {'car': 50, 'bus': 30, 'bike': 70}
         return maxSpeed[self.type]
 
     def getAcceleration(self):
-        acceleration: dict[str, int] = {'car': 1, 'bus': 0.6, 'bike': 1.4}
+        acceleration: dict[str, int] = {'car': 20, 'bus': 12, 'bike': 28}
         return acceleration[self.type]
 
     def setStartLocation(self):
@@ -46,10 +45,17 @@ class Vehicle:
             return size[self.type]
         else:
             return reverse_size[self.type]
-        
+
     def move(self, dt: float):
         speed = self.speed
         acceleration = self.getAcceleration()
+        self.speed += acceleration*dt
+
+        if(self.speed > self.getMaxSpeed()):
+            self.speed = self.getMaxSpeed()
+        elif(self.speed < 0):
+            self.speed = 0
+        
         if self.direction == 'up':
             self.location = (self.location[0], self.location[1] - speed*dt)
         elif self.direction == 'down':
@@ -58,6 +64,11 @@ class Vehicle:
             self.location = (self.location[0] - speed*dt, self.location[1])
         elif self.direction == 'right':
             self.location = (self.location[0] + speed*dt, self.location[1])
+
+class Simulation:
+    vehicles: list[Vehicle]
+
+    
 
 
 vehicles = [Vehicle('car', 'up'), Vehicle('car', 'down'),
@@ -94,4 +105,6 @@ if __name__ == "__main__":
 
         pygame.display.flip()
         dt = clock.tick(60)/1000
+        for vehicle in vehicles:
+            vehicle.move(dt)
     pygame.quit()
