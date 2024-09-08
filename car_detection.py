@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
-import yolov5
-from typing import Literal
+import yolov5 # type: ignore
+from typing import Literal, Optional, List
 import streamlink
 import asyncio
 import websockets
@@ -68,7 +68,7 @@ class Stream:
     url: str
     type: Literal["youtube", "image", "mjpg"]
     label: str
-    cap: cv2.VideoCapture
+    cap: Optional[cv2.VideoCapture]
     roi_points: list
     roi_polygon = None
     total_counts: VehicleCounts
@@ -76,7 +76,8 @@ class Stream:
     prev_counts: VehicleCounts
     camNumber: int
 
-    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"], label: str = f"Camera@{generate_random_string()}", roi_points: list = None):
+    def __init__(self, url: str, type: Literal["youtube", "image", "mjpg"],
+                 label: str = f"Camera@{generate_random_string()}", roi_points: Optional[List] = None):
         self.url = url
         self.type = type
         self.label = label
@@ -147,12 +148,13 @@ class Stream:
 
         cv2.destroyWindow(f'ROI Selection - {self.label}')
 
+    def setROI_Polygon(self):
+        self.roi_polygon = np.array(self.roi_points, np.int32)
+        self.roi_polygon = self.roi_polygon.reshape((-1, 1, 2))
+
     def click_event(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.roi_points.append((x, y))
-            if len(self.roi_points) == 4:
-                self.roi_polygon = np.array(self.roi_points, np.int32)
-                self.roi_polygon = self.roi_polygon.reshape((-1, 1, 2))
 
 
 class StreamThread(threading.Thread):
