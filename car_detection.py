@@ -14,7 +14,7 @@ import threading
 import string
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-
+#websocket
 async def send_detection_data(data):
     async with websockets.connect("ws://0.tcp.in.ngrok.io:14349/sender") as websocket:
         await websocket.send(json.dumps(data))
