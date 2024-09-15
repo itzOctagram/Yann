@@ -6,10 +6,10 @@ from rect import Rect
 
 class TurnInfo:
     turning: bool
-    destination: int
-    turnRate: int
+    destination: float
+    turnRate: float
 
-    def __init__(self, turning: bool, destination: int, turnRate: int):
+    def __init__(self, turning: bool, destination: float, turnRate: float):
         self.turning = turning
         self.destination = destination
         self.turnRate = turnRate
@@ -21,9 +21,9 @@ class Vehicle:
     # left - sharp turn, right - moderate turn
     turnDirection: Literal['left', 'right', 'straight']
     speed: float
-    angle: int
+    angle: float
     turn: TurnInfo
-    location: Tuple[int, int]
+    location: Tuple[float, float]
     image: pygame.Surface
     rect: Rect
 
@@ -60,15 +60,13 @@ class Vehicle:
     def setLocation(self, location: Tuple[int, int]):
         size = self.getSize()
         center = (size[0]//2, size[1]//2)
+        if self.direction == 'left' or self.direction == 'right':
+            center = (center[1], center[0])
         self.location = (location[0]-center[0], location[1]-center[1])
 
     def getSize(self):
         size = {'car': (22, 54), 'bus': (26, 76), 'bike': (17, 38)}
-        reverse_size = {'car': (54, 22), 'bus': (76, 26), 'bike': (38, 17)}
-        if (self.direction == 'up' or self.direction == 'down'):
-            return size[self.type]
-        else:
-            return reverse_size[self.type]
+        return size[self.type]
 
     def move(self, dt: float, vehicles: 'List[Vehicle]'):
         speed = self.speed
@@ -86,8 +84,8 @@ class Vehicle:
         delta_y = speed * dt * math.sin(angle_rad)
 
         # Update the location
-        self.location = (round(self.location[0] + delta_x),
-                         round(self.location[1] - delta_y))
+        self.location = (self.location[0] + delta_x,
+                         self.location[1] - delta_y)
         # self.rect.topleft = self.location
 
         # Turning Logic
@@ -97,44 +95,43 @@ class Vehicle:
                 angle_diff -= 360
 
             # Determine the turn rate
-            turn_rate = self.turn.turnRate * dt
+            turn_rate = self.turn.turnRate * dt * self.speed/self.getMaxSpeed()
 
             # Adjust the angle
             if angle_diff > 0:
-                self.angle += round(min(turn_rate, angle_diff))
+                self.angle += min(turn_rate, angle_diff)
             else:
-                self.angle -= round(min(turn_rate, -angle_diff))
+                self.angle -= min(turn_rate, -angle_diff)
 
             # Normalize the angle to be within [0, 360)
             self.angle %= 360
-            print("turned", turn_rate)
 
             # Check if the angle has reached the destination
             if abs(angle_diff) <= turn_rate:
                 self.angle = self.turn.destination
                 self.turn.turning = False
 
-        # # Check for collisions
-        # for vehicle in vehicles:
-        #     if self != vehicle and self.rect.colliderect(vehicle.rect):
-        #         print(
-        #             f"Collision detected between {self.type} and {vehicle.type}")
-        #         # Handle collision (e.g., stop the vehicle, bounce back, etc.)
-        #         self.speed = 0  # Example: stop the vehicle on collision
+        # Check for collisions
+        for vehicle in vehicles:
+            if self != vehicle and self.rect.isCollision(vehicle.rect):
+                print(
+                    f"Collision detected between {self.type} and {vehicle.type}")
+                # Handle collision (e.g., stop the vehicle, bounce back, etc.)
+                self.speed = 0  # Example: stop the vehicle on collision
 
     def setTurn(self, angle: int, turnRate: int = 3):
         self.turn = TurnInfo(True, self.angle + angle, turnRate)
 
 
-# def rotate_point(point: Tuple[int, int], pivot: Tuple[int, int], angle: float) -> Tuple[int, int]:
-#     px, py = pivot
-#     x, y = point
-#     angle_rad = math.radians(angle)
-#     x_new = px + (x - px) * math.cos(angle_rad) - \
-#         (y - py) * math.sin(angle_rad)
-#     y_new = py + (x - px) * math.sin(angle_rad) + \
-#         (y - py) * math.cos(angle_rad)
-#     return (x_new, y_new)
+def rotate_point(point: Tuple[float, float], pivot: Tuple[float, float], angle: float) -> Tuple[float, float]:
+    px, py = pivot
+    x, y = point
+    angle_rad = math.radians(angle)
+    x_new = px + (x - px) * math.cos(angle_rad) - \
+        (y - py) * math.sin(angle_rad)
+    y_new = py + (x - px) * math.sin(angle_rad) + \
+        (y - py) * math.cos(angle_rad)
+    return (x_new, y_new)
 
 
 class Simulation:
@@ -143,9 +140,9 @@ class Simulation:
         #                  Vehicle('car', 'left', 1), Vehicle('car', 'left', 2), Vehicle(
         #                      'car', 'left', -1), Vehicle('car', 'left', -2),
         #                  Vehicle('car', 'up', 1)]
-        self.vehicles = [Vehicle('car', 'right', 1), Vehicle(
+        self.vehicles = [Vehicle('car', 'right', -2), Vehicle(
             'car', 'left', 1), Vehicle('car', 'up', 1), Vehicle('car', 'down', 1)]
-        self.vehicles[0].setTurn(90, 30)
+        self.vehicles[2].setTurn(90, 13)
 
     def update(self, dt):
         for vehicle in self.vehicles:
@@ -154,26 +151,23 @@ class Simulation:
     def draw(self, screen: pygame.Surface, background_image: pygame.Surface):
         screen.blit(background_image, (0, 0))
         for vehicle in self.vehicles:
-            # Rotate the vehicle image
             rotated_image = pygame.transform.rotate(
                 vehicle.image, vehicle.angle)
-
-            # Blit the rotated image
             screen.blit(rotated_image, vehicle.location)
+            rect = rotated_image.get_rect(topleft=vehicle.location)
+            pygame.draw.circle(screen, (0, 255, 0), rect.center, 5)
 
-            # # Draw the rect outline for debugging
             size = vehicle.getSize()
-            topLeft = (vehicle.location[0], vehicle.location[1])
-            topRight = (vehicle.location[0] + size[0], vehicle.location[1])
-            bottomRight = (
-                vehicle.location[0] + size[0], vehicle.location[1] + size[1])
-            bottomLeft = (vehicle.location[0], vehicle.location[1] + size[1])
-            # angle = {'up': 0, 'down': 0, 'left': 0,
-            #          'right': 0}[vehicle.direction]
+            vehicle.rect = Rect(rect.center, size[0], size[1], vehicle.angle)
+            pygame.draw.polygon(screen, (255, 0, 0),
+                                vehicle.rect.get_points(), 2)
 
-            points = (topLeft, topRight,
-                      bottomRight, bottomLeft)
-            pygame.draw.polygon(screen, (255, 0, 0), points, 2)
+            pygame.draw.circle(screen, (0, 0, 255), vehicle.rect.topLeft, 2)
+            pygame.draw.circle(screen, (0, 0, 255), vehicle.rect.topRight, 2)
+            pygame.draw.circle(
+                screen, (0, 0, 255), vehicle.rect.bottomLeft, 2)
+            pygame.draw.circle(screen, (0, 0, 255),
+                               vehicle.rect.bottomRight, 2)
 
 
 if __name__ == "__main__":
@@ -203,6 +197,6 @@ if __name__ == "__main__":
 
         pygame.display.flip()
         dt = clock.tick(60)/1000
-        simulation.update(dt)
         simulation.draw(screen, scaled_background)
+        simulation.update(dt)
     pygame.quit()
