@@ -155,8 +155,6 @@ class Simulation:
             Vehicle("car", "down", 1),
             Vehicle("car", "down", 2),
         ]
-        self.vehicles[0].setTurn(-90, 13)
-        self.vehicles[1].setTurn(90, 13)
         # self.vehicles = [Vehicle('car', 'right', -2), Vehicle(
         #     'car', 'left', 1), Vehicle('car', 'up', 1), Vehicle('car', 'down', 1)]
         # self.vehicles[0].setTurn(90, 13)
