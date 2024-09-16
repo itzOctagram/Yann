@@ -1,0 +1,15 @@
+Loading net-file from 'D:/Programming/Hackathons_Projects/Yann/Simulation/Sumo_4way_Intersection/network.net.xml' ... done (11ms).
+Loading done.
+Error: The edge 'edge1' within the route 'route0' is not known.
+ The route can not be build.
+Quitting (on error).
+Simulation ended at time: 0.00
+Performance: 
+ Duration: 794.49s
+ Real time factor: 0
+ UPS: 0.000000
+Vehicles: 
+ Inserted: 0
+ Running: 0
+ Waiting: 0
+
