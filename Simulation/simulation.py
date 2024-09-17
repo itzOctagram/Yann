@@ -1,150 +1,22 @@
 import pygame
-from typing import Literal, Tuple, List
-import math
 from rect import Rect
 import asyncio
-import random
-
-
-class TurnInfo:
-    turning: bool
-    destination: float
-    turnRate: float
-
-    def __init__(self, turning: bool, destination: float, turnRate: float):
-        self.turning = turning
-        self.destination = destination
-        self.turnRate = turnRate
-
-
-class Vehicle:
-    type: Literal["car", "bus", "bike"]
-    direction: Literal["up", "down", "left", "right"]
-    # left - sharp turn, right - moderate turn
-    turnDirection: Literal["left", "right", "straight"]
-    speed: float
-    angle: float
-    turn: TurnInfo
-    location: Tuple[float, float]
-    image: pygame.Surface
-    rect: Rect
-    projection: Rect
-
-    def __init__(
-        self,
-        type: Literal["car", "bus", "bike"],
-        direction: Literal["up", "down", "left", "right"],
-        lane: Literal[1, 2, -1, -2],
-        turnDirection: Literal["left", "right", "straight"] = "straight",
-    ):
-        direction_to_angle = {"right": 0, "up": 90, "left": 180, "down": 270}
-
-        self.type = type
-        self.direction = direction
-        self.turnDirection = turnDirection
-        self.speed = 0
-        self.angle = direction_to_angle[direction]
-        self.turn = TurnInfo(False, 0, 0)
-        self.setStartLocation(lane)
-        self.image = pygame.image.load(f"images/right/{type}.png")
-        width, height = {"car": (22, 54), "bus": (26, 76), "bike": (17, 38)}[self.type]
-        self.rect = Rect(self.location, width, height, self.angle)
-
-    def getMaxSpeed(self):
-        maxSpeed = {"car": 75, "bus": 45, "bike": 105}
-        return maxSpeed[self.type]
-
-    def getAcceleration(self) -> int:
-        acceleration: dict[str, int] = {"car": 20, "bus": 12, "bike": 28}
-        return acceleration[self.type]
-
-    def setStartLocation(self, lane: Literal[1, 2, -1, -2]):
-        screen_info = (1280, 720)
-        offsets = {1: 25, 2: 50, -1: 0, -2: -25}
-        startLocation = {
-            "up": (screen_info[0] // 2 - offsets[lane] + 5, screen_info[1]),
-            "down": (screen_info[0] // 2 + offsets[lane] - 20, 0),
-            "left": (screen_info[0], screen_info[1] // 2 + offsets[lane] - 35),
-            "right": (0, screen_info[1] // 2 - offsets[lane] - 10),
-        }
-        self.setLocation(startLocation[self.direction])
-
-    def setLocation(self, location: Tuple[int, int]):
-        size = self.getSize()
-        center = (size[0] // 2, size[1] // 2)
-        if self.direction == "left" or self.direction == "right":
-            center = (center[1], center[0])
-        self.location = (location[0] - center[0], location[1] - center[1])
-
-    def getSize(self):
-        size = {"car": (22, 54), "bus": (26, 76), "bike": (17, 38)}
-        return size[self.type]
-
-    def move(self, dt: float, vehicles: "List[Vehicle]"):
-        speed = self.speed
-        acceleration = self.getAcceleration()
-        self.speed += acceleration * dt
-
-        if self.speed > self.getMaxSpeed():
-            self.speed = self.getMaxSpeed()
-        elif self.speed < 0:
-            self.speed = 0
-
-        angle_rad = math.radians(self.angle)
-        # Calculate the change in x and y coordinates
-        delta_x = speed * dt * math.cos(angle_rad)
-        delta_y = speed * dt * math.sin(angle_rad)
-
-        # Update the location
-        self.location = (self.location[0] + delta_x, self.location[1] - delta_y)
-        # self.rect.topleft = self.location
-
-        # Turning Logic
-        if self.turn.turning:
-            angle_diff = (self.turn.destination - self.angle) % 360
-            if angle_diff > 180:
-                angle_diff -= 360
-
-            # Determine the turn rate
-            turn_rate = self.turn.turnRate * dt * self.speed / self.getMaxSpeed()
-
-            # Adjust the angle
-            if angle_diff > 0:
-                self.angle += min(turn_rate, angle_diff)
-            else:
-                self.angle -= min(turn_rate, -angle_diff)
-
-            # Normalize the angle to be within [0, 360)
-            self.angle %= 360
-
-            # Check if the angle has reached the destination
-            if abs(angle_diff) <= turn_rate:
-                self.angle = self.turn.destination
-                self.turn.turning = False
-
-        # Check for collisions
-        for vehicle in vehicles:
-            if self != vehicle and self.rect.isCollision(vehicle.rect):
-                print(f"Collision detected between {self.type} and {vehicle.type}")
-                # Handle collision (e.g., stop the vehicle, bounce back, etc.)
-                self.speed = 0  # Example: stop the vehicle on collision
-
-        # Check for projection collisions
-        for vehicle in vehicles:
-            if self != vehicle and self.projection.isCollision(vehicle.rect):
-                print(
-                    f"Projection collision detected between {self.type} and {vehicle.type}"
-                )
-                self.speed = self.speed - self.getAcceleration() * dt * 10
-                if self.speed < 0:
-                    self.speed *= 3
-
-    def setTurn(self, angle: int, turnRate: int = 3):
-        self.turn = TurnInfo(True, self.angle + angle, turnRate)
+from vehicle import Vehicle
+from trafficLight import TrafficLight
 
 
 class Simulation:
+    vehicles: list[Vehicle]
+    trafficLights: list[TrafficLight]
+
     def __init__(self):
+        locations = {
+            "left": (520, 340),
+            "right": (740, 340),
+            "up": (630, 250),
+            "down": (630, 430),
+        }
+
         self.vehicles = [
             Vehicle("car", "right", 1),
             Vehicle("car", "right", 2),
@@ -161,14 +33,18 @@ class Simulation:
         # self.vehicles[1].setTurn(-90, 13)
         # self.vehicles[2].setTurn(180, 13)
         # self.vehicles[3].setTurn(0, 13)
+        self.trafficLights = [
+            TrafficLight(locations["left"], "vertical", "red"),
+            TrafficLight(locations["right"], "vertical", "red"),
+            TrafficLight(locations["up"], "horizontal", "red"),
+            TrafficLight(locations["down"], "horizontal", "red"),
+        ]
 
     def update(self, dt):
         for vehicle in self.vehicles:
             vehicle.move(dt, self.vehicles)
 
-    def draw(self, screen: pygame.Surface, background_image: pygame.Surface):
-        screen.blit(background_image, (0, 0))
-
+    def draw(self, screen: pygame.Surface):
         for vehicle in self.vehicles:
             rotated_image = pygame.transform.rotate(vehicle.image, vehicle.angle)
             screen.blit(rotated_image, vehicle.location)
@@ -187,6 +63,11 @@ class Simulation:
             # Rect projection
             vehicle.projection = vehicle.rect.project_rect()
             pygame.draw.polygon(screen, (0, 255, 0), vehicle.projection.get_points(), 2)
+
+    def showLights(self, screen: pygame.Surface):
+        for light in self.trafficLights:
+            pygame.draw.polygon(screen, light.color, light.rect.get_points(), 0)
+            pygame.draw.circle(screen, (255, 255, 255), light.rect.topLeft, 2)
 
     def clean(self):
         for vehicle in self.vehicles:
@@ -257,7 +138,12 @@ async def main() -> None:
 
         pygame.display.flip()
         dt = clock.tick(60) / 1000
-        simulation.draw(screen, scaled_background)
+
+        screen.blit(scaled_background, (0, 0))
+        simulation.showLights(screen)
+        simulation.draw(
+            screen,
+        )
         simulation.update(dt)
         simulation.clean()
         await asyncio.sleep(0)
