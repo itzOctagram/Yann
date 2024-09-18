@@ -19,12 +19,12 @@ class Simulation:
 
         self.vehicles = [
             Vehicle("car", "right", 1, "right"),
-            Vehicle("car", "right", 2, "left"),
-            # Vehicle("car", "left", 1),
+            # Vehicle("car", "right", 2, "left"),
+            Vehicle("car", "left", 1, "left"),
             # Vehicle("car", "left", 2),
-            # Vehicle("car", "up", 1),
+            Vehicle("car", "up", 1, "right"),
             # Vehicle("car", "up", 2),
-            # Vehicle("car", "down", 1),
+            Vehicle("car", "down", 1, "right"),
             # Vehicle("car", "down", 2),
         ]
         # self.vehicles = [Vehicle('car', 'right', -2), Vehicle(
