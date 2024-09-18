@@ -18,14 +18,14 @@ class Simulation:
         }
 
         self.vehicles = [
-            Vehicle("car", "right", 1),
-            Vehicle("car", "right", 2),
-            Vehicle("car", "left", 1),
-            Vehicle("car", "left", 2),
-            Vehicle("car", "up", 1),
-            Vehicle("car", "up", 2),
-            Vehicle("car", "down", 1),
-            Vehicle("car", "down", 2),
+            Vehicle("car", "right", 1, "right"),
+            Vehicle("car", "right", 2, "left"),
+            # Vehicle("car", "left", 1),
+            # Vehicle("car", "left", 2),
+            # Vehicle("car", "up", 1),
+            # Vehicle("car", "up", 2),
+            # Vehicle("car", "down", 1),
+            # Vehicle("car", "down", 2),
         ]
         # self.vehicles = [Vehicle('car', 'right', -2), Vehicle(
         #     'car', 'left', 1), Vehicle('car', 'up', 1), Vehicle('car', 'down', 1)]
@@ -33,18 +33,26 @@ class Simulation:
         # self.vehicles[1].setTurn(-90, 13)
         # self.vehicles[2].setTurn(180, 13)
         # self.vehicles[3].setTurn(0, 13)
-        self.trafficLights = [
-            TrafficLight(locations["left"], "vertical", "red"),
-            TrafficLight(locations["right"], "vertical", "red"),
-            TrafficLight(locations["up"], "horizontal", "red"),
-            TrafficLight(locations["down"], "horizontal", "red"),
-        ]
+        # self.trafficLights = [
+        #     TrafficLight(locations["left"], "vertical", "red"),
+        #     TrafficLight(locations["right"], "vertical", "red"),
+        #     TrafficLight(locations["up"], "horizontal", "red"),
+        #     TrafficLight(locations["down"], "horizontal", "red"),
+        # ]
+
+        self.turnLocations = {
+            "left": (560, 340),
+            "right": (700, 340),
+            "up": (630, 270),
+            "down": (630, 400),
+        }
 
     def update(self, dt):
         for vehicle in self.vehicles:
             vehicle.move(dt, self.vehicles)
 
     def draw(self, screen: pygame.Surface):
+
         for vehicle in self.vehicles:
             rotated_image = pygame.transform.rotate(vehicle.image, vehicle.angle)
             screen.blit(rotated_image, vehicle.location)
@@ -68,6 +76,29 @@ class Simulation:
         for light in self.trafficLights:
             pygame.draw.polygon(screen, light.color, light.rect.get_points(), 0)
             pygame.draw.circle(screen, (255, 255, 255), light.rect.topLeft, 2)
+
+    def showTurnLocations(self, screen: pygame.Surface):
+        inverse = {"left": "right", "right": "left", "up": "down", "down": "up"}
+        for turnLocationKey in self.turnLocations:
+            turnLocation = self.turnLocations[turnLocationKey]
+            rect = Rect(
+                turnLocation,
+                100,
+                1,
+                0 if turnLocationKey == "left" or turnLocationKey == "right" else 90,
+            )
+            pygame.draw.polygon(screen, (255, 0, 0), rect.get_points(), 2)
+            for vehicle in self.vehicles:
+                if (
+                    not vehicle.turn.turning
+                    and turnLocationKey == inverse[vehicle.direction]
+                    and vehicle.rect.isCollision(rect)
+                    and not vehicle.turnDirection == "straight"
+                ):
+                    if vehicle.turnDirection == "left":
+                        vehicle.setTurn(90, 50)
+                    elif vehicle.turnDirection == "right":
+                        vehicle.setTurn(-90, 32)
 
     def clean(self):
         for vehicle in self.vehicles:
@@ -140,10 +171,9 @@ async def main() -> None:
         dt = clock.tick(60) / 1000
 
         screen.blit(scaled_background, (0, 0))
-        simulation.showLights(screen)
-        simulation.draw(
-            screen,
-        )
+        # simulation.showLights(screen)
+        simulation.draw(screen)
+        simulation.showTurnLocations(screen)
         simulation.update(dt)
         simulation.clean()
         await asyncio.sleep(0)

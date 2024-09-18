@@ -112,17 +112,16 @@ class Rect:
 
         return True  # No separating axis found, so the rectangles must be colliding
 
-    def project_rect(rect, length=10,fov=0):
-        length = length * 5
-        direction = rect._rotate_point((1,0),0,0,math.radians(rect.angle))
+    def project_rect(self, length=50,fov=0):
+        direction = self._rotate_point((1,0),0,0,math.radians(self.angle))
 
-        new_bottomLeft = rect.topLeft
-        new_bottomRight = rect.topRight
-        new_topLeft = (rect.topLeft[0] + direction[0] * length, rect.topLeft[1] + direction[1] * length)
-        new_topRight = (rect.topRight[0] + direction[0] * length , rect.topRight[1] + direction[1] * length)
+        new_bottomLeft = self.topLeft
+        new_bottomRight = self.topRight
+        new_topLeft = (self.topLeft[0] + direction[0] * length, self.topLeft[1] + direction[1] * length)
+        new_topRight = (self.topRight[0] + direction[0] * length , self.topRight[1] + direction[1] * length)
 
-        new_topLeft = rect._rotate_point(new_topLeft,*new_bottomLeft,math.radians(fov))
-        new_topRight = rect._rotate_point(new_topRight,*new_bottomRight,math.radians(-fov))
+        new_topLeft = self._rotate_point(new_topLeft,*new_bottomLeft,math.radians(fov))
+        new_topRight = self._rotate_point(new_topRight,*new_bottomRight,math.radians(-fov))
         return Rect.from_corners(new_topLeft, new_topRight, new_bottomRight, new_bottomLeft)
 # testRect = Rect((0, 0), 1, 1, 90)
 # points = testRect.get_points()

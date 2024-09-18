@@ -56,6 +56,7 @@ class Vehicle:
         acceleration: dict[str, float] = {"car": 20, "bus": 12, "bike": 28}
         return acceleration[self.type]
 
+
     def setStartLocation(self, lane: Literal[1, 2, -1, -2]):
         screen_info = (1280, 720)
         offsets = {1: 25, 2: 50, -1: 0, -2: -25}
@@ -97,14 +98,14 @@ class Vehicle:
                 if self != vehicle and self.projection.isCollision(vehicle.rect):
                     projectionCollision = True
 
-            # if rectCollision and projectionCollision:
-            #     self._reverse(dt)
-            if rectCollision:
+            if rectCollision and projectionCollision:
+                self._reverse(dt)
+            elif rectCollision:
                 # self._brake(dt)
                 self.speed = 0
-            if projectionCollision:
-                self._reverse(dt)
-            if not rectCollision and not projectionCollision:
+            elif projectionCollision:
+                self._brake(dt)
+            elif not rectCollision and not projectionCollision:
                 self._accelerate(dt)
 
         performMovement()
@@ -135,16 +136,7 @@ class Vehicle:
                 self.angle = self.turn.destination
                 self.turn.turning = False
 
-        # # Check for collisions
-        # for vehicle in vehicles:
-        #     if self != vehicle and self.rect.isCollision(vehicle.rect):
-        #         print(f"Collision detected between {self.type} and {vehicle.type}")
-        #         # Handle collision (e.g., stop the vehicle, bounce back, etc.)
-        #         self.speed = (
-        #             -abs(self.speed) / 2
-        #         )  # Example: stop the vehicle on collision
-
-    def setTurn(self, angle: int, turnRate: int = 3):
+    def setTurn(self, angle: int, turnRate: int):
         self.turn = TurnInfo(True, self.angle + angle, turnRate)
 
     def _accelerate(self, dt: float): # if no rect or projection collision
