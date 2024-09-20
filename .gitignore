@@ -1,4 +1,5 @@
 .venv
 .env
+servernew.py
 .mypy_cache
 __pycache__
