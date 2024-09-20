@@ -430,34 +430,34 @@ def updateValues():
 # Generating vehicles in the simulation
 
 
-# def generateVehicles():
-#     while (True):
-#         vehicle_type = random.randint(0, 4)
-#         if (vehicle_type == 4):
-#             lane_number = 0
-#         else:
-#             lane_number = random.randint(0, 1) + 1
-#         will_turn = 0
-#         if (lane_number == 2):
-#             temp = random.randint(0, 4)
-#             if (temp <= 2):
-#                 will_turn = 1
-#             elif (temp > 2):
-#                 will_turn = 0
-#         temp = random.randint(0, 999)
-#         direction_number = 0
-#         a = [400, 800, 900, 1000]
-#         if (temp < a[0]):
-#             direction_number = 0
-#         elif (temp < a[1]):
-#             direction_number = 1
-#         elif (temp < a[2]):
-#             direction_number = 2
-#         elif (temp < a[3]):
-#             direction_number = 3
-#         Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
-#                 directionNumbers[direction_number], will_turn)
-#         time.sleep(0.75)
+def generateVehicles():
+    while (True):
+        vehicle_type = random.randint(0, 4)
+        if (vehicle_type == 4):
+            lane_number = 0
+        else:
+            lane_number = random.randint(0, 1) + 1
+        will_turn = 0
+        if (lane_number == 2):
+            temp = random.randint(0, 4)
+            if (temp <= 2):
+                will_turn = 1
+            elif (temp > 2):
+                will_turn = 0
+        temp = random.randint(0, 999)
+        direction_number = 0
+        a = [400, 800, 900, 1000]
+        if (temp < a[0]):
+            direction_number = 0
+        elif (temp < a[1]):
+            direction_number = 1
+        elif (temp < a[2]):
+            direction_number = 2
+        elif (temp < a[3]):
+            direction_number = 3
+        Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
+                directionNumbers[direction_number], will_turn)
+        time.sleep(0.75)
 
 
 def simulationTime():
@@ -499,39 +499,39 @@ def simulationTime():
 #     asyncio.get_event_loop().run_until_complete(start_server)
 #     asyncio.get_event_loop().run_forever()
 
-async def generateVehicles():
-    uri = "ws://localhost:8765/receiver"
-    async with websockets.connect(uri) as websocket:
-        async for message in websocket:
-            vehicle_data = json.loads(message)
-            vehicle_data = vehicle_data["received_from_sender"]
-            # print(vehicle_data)
-            vehicle_type = vehicle_data["vehicleClass"]
-            lane_number = vehicle_data["lane"]
-            will_turn = vehicle_data["willTurn"]
-            direction_number = vehicle_data["direction"]
-            if (vehicle_type == 'car'):
-                vehicle_type = 0
-            elif (vehicle_type == 'bus'):
-                vehicle_type = 1
-            elif (vehicle_type == 'truck'):
-                vehicle_type = 2
-            elif (vehicle_type == 'rickshaw'):
-                vehicle_type = 3
-            elif (vehicle_type == 'motorcycle'):
-                vehicle_type = 4
-            if (direction_number == 'right'):
-                direction_number = 0
-            elif (direction_number == 'down'):
-                direction_number = 1
-            elif (direction_number == 'left'):
-                direction_number = 2
-            elif (direction_number == 'up'):
-                direction_number = 3
-            print(vehicle_type, lane_number, will_turn, direction_number)
-            Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
-                    directionNumbers[direction_number], will_turn)
-            time.sleep(0.75)
+# async def generateVehicles():
+#     uri = "ws://0.tcp.in.ngrok.io:15468/receiver"
+#     async with websockets.connect(uri) as websocket:
+#         async for message in websocket:
+#             vehicle_data = json.loads(message)
+#             vehicle_data = vehicle_data["received_from_sender"]
+#             # print(vehicle_data)
+#             vehicle_type = vehicle_data["vehicleClass"]
+#             lane_number = vehicle_data["lane"]
+#             will_turn = vehicle_data["willTurn"]
+#             direction_number = vehicle_data["direction"]
+#             if (vehicle_type == 'car'):
+#                 vehicle_type = 0
+#             elif (vehicle_type == 'bus'):
+#                 vehicle_type = 1
+#             elif (vehicle_type == 'truck'):
+#                 vehicle_type = 2
+#             elif (vehicle_type == 'rickshaw'):
+#                 vehicle_type = 3
+#             elif (vehicle_type == 'motorcycle'):
+#                 vehicle_type = 4
+#             if (direction_number == 'right'):
+#                 direction_number = 0
+#             elif (direction_number == 'down'):
+#                 direction_number = 1
+#             elif (direction_number == 'left'):
+#                 direction_number = 2
+#             elif (direction_number == 'up'):
+#                 direction_number = 3
+#             print(vehicle_type, lane_number, will_turn, direction_number)
+#             Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
+#                     directionNumbers[direction_number], will_turn)
+#             time.sleep(0.75)
 
 
 def start_websocket_server():
