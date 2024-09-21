@@ -11,9 +11,9 @@ import optparse
 
 if 'SUMO_HOME' in os.environ:
     sys.path.append(os.path.join(os.environ['SUMO_HOME'], 'tools'))
-import sumolib  # noqa
-from sumolib.miscutils import euclidean  # noqa
-from sumolib.geomhelper import naviDegree, minAngleDegreeDiff  # noqa
+import sumolib  # type: ignore # noqa
+from sumolib.miscutils import euclidean  # type: ignore # noqa
+from sumolib.geomhelper import naviDegree, minAngleDegreeDiff # type: ignore # noqa
 
 DUAROUTER = sumolib.checkBinary('duarouter')
 

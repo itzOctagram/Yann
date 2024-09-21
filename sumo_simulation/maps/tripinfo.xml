@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2024-09-20 22:24:56 by Eclipse SUMO sumo Version 1.20.0
+<!-- generated on 2024-09-21 15:21:20 by Eclipse SUMO sumo Version 1.20.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
-        <net-file value="maps/city1.net.xml"/>
-        <route-files value="maps/city1.rou.xml"/>
+        <net-file value="sumo_simulation/maps/intersection.net.xml"/>
+        <route-files value="sumo_simulation/maps/intersection.rou.xml"/>
     </input>
 
     <output>
-        <tripinfo-output value="maps/tripinfo.xml"/>
+        <tripinfo-output value="sumo_simulation/maps/tripinfo.xml"/>
     </output>
 
     <time>
@@ -23,7 +23,7 @@
     </report>
 
     <traci_server>
-        <remote-port value="3809"/>
+        <remote-port value="62725"/>
     </traci_server>
 
 </configuration>

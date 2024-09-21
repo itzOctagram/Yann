@@ -6,7 +6,7 @@ import sys
 import time
 import optparse
 import random
-import serial
+import serial  # type: ignore
 import numpy as np
 import torch
 import torch.optim as optim
@@ -21,8 +21,8 @@ if "SUMO_HOME" in os.environ:
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
-from sumolib import checkBinary  # noqa
-import traci  # noqa
+from sumolib import checkBinary  # type: ignore  # noqa
+import traci  # type: ignore # noqa
 
 
 def get_vehicle_numbers(lanes):
@@ -62,8 +62,7 @@ class Model(nn.Module):
 
         self.optimizer = optim.Adam(self.parameters(), lr=self.lr)
         self.loss = nn.MSELoss()
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
 
     def forward(self, state):
@@ -129,14 +128,13 @@ class Agent:
         index = self.memory[junction]["mem_cntr"] % self.max_mem
         self.memory[junction]["state_memory"][index] = state
         self.memory[junction]["new_state_memory"][index] = state_
-        self.memory[junction]['reward_memory'][index] = reward
-        self.memory[junction]['terminal_memory'][index] = done
+        self.memory[junction]["reward_memory"][index] = reward
+        self.memory[junction]["terminal_memory"][index] = done
         self.memory[junction]["action_memory"][index] = action
         self.memory[junction]["mem_cntr"] += 1
 
     def choose_action(self, observation):
-        state = torch.tensor([observation], dtype=torch.float).to(
-            self.Q_eval.device)
+        state = torch.tensor([observation], dtype=torch.float).to(self.Q_eval.device)
         if np.random.random() > self.epsilon:
             actions = self.Q_eval.forward(state)
             action = torch.argmax(actions).item()
@@ -146,15 +144,15 @@ class Agent:
 
     def reset(self, junction_numbers):
         for junction_number in junction_numbers:
-            self.memory[junction_number]['mem_cntr'] = 0
+            self.memory[junction_number]["mem_cntr"] = 0
 
     def save(self, model_name):
-        torch.save(self.Q_eval.state_dict(), f'models/{model_name}.bin')
+        torch.save(self.Q_eval.state_dict(), f"sumo_simulation/models/{model_name}.bin")
 
     def learn(self, junction):
         self.Q_eval.optimizer.zero_grad()
 
-        batch = np.arange(self.memory[junction]['mem_cntr'], dtype=np.int32)
+        batch = np.arange(self.memory[junction]["mem_cntr"], dtype=np.int32)
 
         state_batch = torch.tensor(self.memory[junction]["state_memory"][batch]).to(
             self.Q_eval.device
@@ -162,10 +160,12 @@ class Agent:
         new_state_batch = torch.tensor(
             self.memory[junction]["new_state_memory"][batch]
         ).to(self.Q_eval.device)
-        reward_batch = torch.tensor(
-            self.memory[junction]['reward_memory'][batch]).to(self.Q_eval.device)
+        reward_batch = torch.tensor(self.memory[junction]["reward_memory"][batch]).to(
+            self.Q_eval.device
+        )
         terminal_batch = torch.tensor(
-            self.memory[junction]['terminal_memory'][batch]).to(self.Q_eval.device)
+            self.memory[junction]["terminal_memory"][batch]
+        ).to(self.Q_eval.device)
         action_batch = self.memory[junction]["action_memory"][batch]
 
         q_eval = self.Q_eval.forward(state_batch)[batch, action_batch]
@@ -186,15 +186,19 @@ class Agent:
 
 
 def run(train=True, model_name="model", epochs=50, steps=500):
-
     """execute the TraCI control loop"""
     epochs = epochs
     steps = steps
     best_time = np.inf
     total_time_list = list()
     traci.start(
-        [checkBinary("sumo"), "-c", "configuration.sumocfg",
-         "--tripinfo-output", "maps/tripinfo.xml"]
+        [
+            checkBinary("sumo"),
+            "-c",
+            "sumo_simulation/configuration.sumocfg",
+            "--tripinfo-output",
+            "sumo_simulation/maps/tripinfo.xml",
+        ]
     )
     all_junctions = traci.trafficlight.getIDList()
     junction_numbers = list(range(len(all_junctions)))
@@ -203,7 +207,7 @@ def run(train=True, model_name="model", epochs=50, steps=500):
         gamma=0.99,
         epsilon=0.0,
         lr=0.1,
-        input_dims=4,
+        input_dims=8,
         # input_dims = len(all_junctions) * 4,
         fc1_dims=256,
         fc2_dims=256,
@@ -213,29 +217,43 @@ def run(train=True, model_name="model", epochs=50, steps=500):
     )
 
     if not train:
-        brain.Q_eval.load_state_dict(torch.load(
-            f'models/{model_name}.bin', map_location=brain.Q_eval.device))
+        brain.Q_eval.load_state_dict(
+            torch.load(
+                f"sumo_simulation/models/{model_name}.bin",
+                map_location=brain.Q_eval.device,
+            )
+        )
 
     print(brain.Q_eval.device)
     traci.close()
     for e in range(epochs):
         if train:
             traci.start(
-                [checkBinary("sumo"), "-c", "configuration.sumocfg",
-                 "--tripinfo-output", "tripinfo.xml"]
+                [
+                    checkBinary("sumo"),
+                    "-c",
+                    "sumo_simulation/configuration.sumocfg",
+                    "--tripinfo-output",
+                    "sumo_simulation/tripinfo.xml",
+                ]
             )
         else:
             traci.start(
-                [checkBinary("sumo-gui"), "-c", "configuration.sumocfg",
-                 "--tripinfo-output", "tripinfo.xml"]
+                [
+                    checkBinary("sumo-gui"),
+                    "-c",
+                    "sumo_simulation/configuration.sumocfg",
+                    "--tripinfo-output",
+                    "sumo_simulation/tripinfo.xml",
+                ]
             )
 
         print(f"epoch: {e}")
         select_lane = [
-            ["yyyrrrrrrrrr", "GGGrrrrrrrrr"],
-            ["rrryyyrrrrrr", "rrrGGGrrrrrr"],
-            ["rrrrrryyyrrr", "rrrrrrGGGrrr"],
-            ["rrrrrrrrryyy", "rrrrrrrrrGGG"],
+            ["yyyyyrrrrrrrrrrrrrrr", "GGGGGrrrrrrrrrrrrrrr"],
+            ["rrrrryyyyyrrrrrrrrrr", "rrrrrGGGGGrrrrrrrrrr"],
+            ["rrrrrrrrrryyyyyrrrrr", "rrrrrrrrrrGGGGGrrrrr"],
+            ["rrrrrrrrrrrrrrryyyyy", "rrrrrrrrrrrrrrrGGGGG"],
         ]
 
         # select_lane = [
@@ -259,16 +277,14 @@ def run(train=True, model_name="model", epochs=50, steps=500):
             prev_wait_time[junction] = 0
             prev_action[junction_number] = 0
             traffic_lights_time[junction] = 0
-            prev_vehicles_per_lane[junction_number] = [0] * 4
+            prev_vehicles_per_lane[junction_number] = [0] * 8
             # prev_vehicles_per_lane[junction_number] = [0] * (len(all_junctions) * 4)
-            all_lanes.extend(
-                list(traci.trafficlight.getControlledLanes(junction)))
+            all_lanes.extend(list(traci.trafficlight.getControlledLanes(junction)))
 
         while step <= steps:
             traci.simulationStep()
             for junction_number, junction in enumerate(all_junctions):
-                controled_lanes = traci.trafficlight.getControlledLanes(
-                    junction)
+                controled_lanes = traci.trafficlight.getControlledLanes(junction)
                 waiting_time = get_waiting_time(controled_lanes)
                 total_time += waiting_time
                 if traffic_lights_time[junction] == 0:
@@ -281,16 +297,19 @@ def run(train=True, model_name="model", epochs=50, steps=500):
                     state = prev_vehicles_per_lane[junction_number]
                     prev_vehicles_per_lane[junction_number] = state_
                     brain.store_transition(
-                        state, state_, prev_action[junction_number], reward, (step == steps), junction_number)
+                        state,
+                        state_,
+                        prev_action[junction_number],
+                        reward,
+                        (step == steps),
+                        junction_number,
+                    )
 
                     # selecting new action based on current state
                     lane = brain.choose_action(state_)
                     prev_action[junction_number] = lane
                     phaseDuration(junction, 6, select_lane[lane][0])
-                    phaseDuration(junction, min_duration +
-                                  10, select_lane[lane][1])
-
-
+                    phaseDuration(junction, min_duration + 10, select_lane[lane][1])
 
                     traffic_lights_time[junction] = min_duration + 10
                     if train:
@@ -314,36 +333,37 @@ def run(train=True, model_name="model", epochs=50, steps=500):
         plt.plot(list(range(len(total_time_list))), total_time_list)
         plt.xlabel("epochs")
         plt.ylabel("total time")
-        plt.savefig(f'plots/time_vs_epoch_{model_name}.png')
+        plt.savefig(f"plots/time_vs_epoch_{model_name}.png")
         plt.show()
 
-#use thhis
+
+# use thhis
 def get_options():
     optParser = optparse.OptionParser()
     optParser.add_option(
         "-m",
-        dest='model_name',
-        type='string',
-        default="model",
+        dest="model_name",
+        type="string",
+        default="new_model",
         help="name of model",
     )
     optParser.add_option(
         "--train",
-        action='store_true',
+        action="store_true",
         default=False,
         help="training or testing",
     )
     optParser.add_option(
         "-e",
-        dest='epochs',
-        type='int',
+        dest="epochs",
+        type="int",
         default=50,
         help="Number of epochs",
     )
     optParser.add_option(
         "-s",
-        dest='steps',
-        type='int',
+        dest="steps",
+        type="int",
         default=500,
         help="Number of steps",
     )
@@ -356,7 +376,7 @@ def get_options():
 if __name__ == "__main__":
     options = get_options()
     model_name = options.model_name
-    train = options.train
+    train = True
     epochs = options.epochs
     steps = options.steps
 
