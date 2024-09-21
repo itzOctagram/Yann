@@ -290,7 +290,6 @@ def run(train=True, model_name="model", epochs=50, steps=500):
             all_lanes.extend(list(traci.trafficlight.getControlledLanes(junction)))
 
         while step <= steps:
-            traci.vehicle.add(f"veh_{step}", "route1")
             traci.simulationStep()
             for junction_number, junction in enumerate(all_junctions):
                 controled_lanes = traci.trafficlight.getControlledLanes(junction)
@@ -373,7 +372,7 @@ def get_options():
         "-s",
         dest="steps",
         type="int",
-        default=500,
+        default=5000,
         help="Number of steps",
     )
 
@@ -385,8 +384,10 @@ def add_vehicle(
     direction: Literal["north", "west", "south", "east"],
     turn: Literal["left", "straight", "right"],
 ):
-    routeId = {"north": 0, "west": 1, "south": 2, "east": 3}[direction] * 3
-    +{"left": 0, "straight": 1, "right": 2}[turn]
+    routeId = 1
+    routeId = routeId + {"north": 0, "west": 1, "south": 2, "east": 3}[direction] * 3
+    routeId = routeId + {"left": 0, "straight": 1, "right": 2}[turn]
+    print(f"Adding vehicle with routeId: {routeId}")
     traci.vehicle.add(f"veh_{time.time()}", f"route{routeId}")
 
 
@@ -394,11 +395,12 @@ async def handler(websocket, path):
     async for message in websocket:
         data = json.loads(message)
         print(f"Received data from {path}: {data}")
+        data = data["received_from_sender"]
         direction = data["direction"]
         turn = data["turn"]
         direction = {0: "north", 1: "west", 2: "south", 3: "east"}[direction]
         turn = {0: "left", 1: "straight", 2: "right"}[turn]
-        # add_vehicle(direction, turn)
+        add_vehicle(direction, turn)
 
 
 async def receive_message():
@@ -420,6 +422,7 @@ async def receive_message():
 def run_receive_message():
     asyncio.run(receive_message())
 
+
 # this is the main entry point of this script
 if __name__ == "__main__":
     options = get_options()
@@ -436,4 +439,4 @@ if __name__ == "__main__":
     run(train=train, model_name=model_name, epochs=epochs, steps=steps)
 
     # Wait for the WebSocket server thread to finish
-    websocket_thread.join()
+    # websocket_thread.join()

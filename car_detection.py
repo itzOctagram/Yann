@@ -219,12 +219,12 @@ class StreamThread(threading.Thread):
                         # Randomly set willTurn
                         will_turn = random.choice([0,1,2])
                         if (model.names[class_id] != 'motorcycle'):
-                            if (will_turn):
+                            if (will_turn != 1):
                                 lane = 2
                             else:
                                 lane = random.choice([1, 2])
                         else:
-                            if (will_turn):
+                            if (will_turn != 1):
                                 lane = 2
                             else:
                                 lane = 0
@@ -233,7 +233,7 @@ class StreamThread(threading.Thread):
                             "direction": self.stream.camNumber,  # This could be updated based on your needs
                             "lane": lane,
                             "vehicleClass": model.names[class_id],
-                            "willTurn": will_turn,
+                            "turn": will_turn,
                             "label": self.stream.label,
                         }
                         if ((model.names[class_id] == 'car' and self.stream.current_counts.car > self.stream.prev_counts.car) or (model.names[class_id] == 'bus' and self.stream.current_counts.bus > self.stream.prev_counts.bus) or (model.names[class_id] == 'motorcycle' and self.stream.current_counts.motorcycle > self.stream.prev_counts.motorcycle)):
