@@ -212,7 +212,7 @@ def run(train=True, model_name="model", epochs=50, steps=500):
         fc1_dims=256,
         fc2_dims=256,
         batch_size=1024,
-        n_actions=4,
+        n_actions=8,
         junctions=junction_numbers,
     )
 
@@ -250,6 +250,10 @@ def run(train=True, model_name="model", epochs=50, steps=500):
 
         print(f"epoch: {e}")
         select_lane = [
+            ["yyyyyrrrrrrrrrrrrrrr", "GGGGGrrrrrrrrrrrrrrr"],
+            ["rrrrryyyyyrrrrrrrrrr", "rrrrrGGGGGrrrrrrrrrr"],
+            ["rrrrrrrrrryyyyyrrrrr", "rrrrrrrrrrGGGGGrrrrr"],
+            ["rrrrrrrrrrrrrrryyyyy", "rrrrrrrrrrrrrrrGGGGG"],
             ["yyyyyrrrrrrrrrrrrrrr", "GGGGGrrrrrrrrrrrrrrr"],
             ["rrrrryyyyyrrrrrrrrrr", "rrrrrGGGGGrrrrrrrrrr"],
             ["rrrrrrrrrryyyyyrrrrr", "rrrrrrrrrrGGGGGrrrrr"],
@@ -333,7 +337,7 @@ def run(train=True, model_name="model", epochs=50, steps=500):
         plt.plot(list(range(len(total_time_list))), total_time_list)
         plt.xlabel("epochs")
         plt.ylabel("total time")
-        plt.savefig(f"plots/time_vs_epoch_{model_name}.png")
+        plt.savefig(f"sumo_simulation/plots/time_vs_epoch_{model_name}.png")
         plt.show()
 
 
@@ -376,7 +380,7 @@ def get_options():
 if __name__ == "__main__":
     options = get_options()
     model_name = options.model_name
-    train = True
+    train = options.train
     epochs = options.epochs
     steps = options.steps
 

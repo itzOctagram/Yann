@@ -32,5 +32,13 @@
     <flow id="flow2" type="car" begin="0" end="1000" number="100" route="route2" />
     <flow id="flow3" type="car" begin="0" end="1000" number="100" route="route3" />
     <flow id="flow4" type="car" begin="0" end="1000" number="100" route="route4" />
+    <flow id="flow5" type="car" begin="0" end="1000" number="100" route="route5" />
+    <flow id="flow6" type="car" begin="0" end="1000" number="100" route="route6" />
+    <flow id="flow7" type="car" begin="0" end="1000" number="100" route="route7" />
+    <flow id="flow8" type="car" begin="0" end="1000" number="100" route="route8" />
+    <flow id="flow9" type="car" begin="0" end="1000" number="100" route="route9" />
+    <flow id="flow10" type="car" begin="0" end="1000" number="100" route="route10" />
+    <flow id="flow11" type="car" begin="0" end="1000" number="100" route="route11" />
+    <flow id="flow12" type="car" begin="0" end="1000" number="100" route="route12" />
 
 </routes>
