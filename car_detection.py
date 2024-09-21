@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 #websocket
 async def send_detection_data(data):
-    async with websockets.connect("ws://0.tcp.in.ngrok.io:14349/sender") as websocket:
+    async with websockets.connect("ws://localhost:8765/sender") as websocket:
         await websocket.send(json.dumps(data))
         print(f"Sent data: {data}")
 
@@ -217,7 +217,7 @@ class StreamThread(threading.Thread):
                         lane = 0  # Motorcycles use lane 1
                     if (model.names[class_id] == 'car' or model.names[class_id] == 'bus' or model.names[class_id] == 'motorcycle'):
                         # Randomly set willTurn
-                        will_turn = random.choice([True, False])
+                        will_turn = random.choice([0,1,2])
                         if (model.names[class_id] != 'motorcycle'):
                             if (will_turn):
                                 lane = 2
@@ -316,7 +316,7 @@ stream15 = Stream(
 stream16 = Stream(
     "http://175.138.229.49:8082/cgi-bin/viewer/video.jpg?r=1725431504", "image", "Image3")
 
-streams = [stream5, stream11, stream16, stream4]  # Use 4 streams at maximum
+streams = [stream5]  # Use 4 streams at maximum
 
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')

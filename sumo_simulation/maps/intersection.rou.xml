@@ -7,14 +7,14 @@
     <vType id="car" accel="1.0" decel="1.5" length="5.0" maxSpeed="13.89" sigma="0.5" />
 
     <!-- Define routes: Each route uses edge IDs from the network file -->
-    <route id="route1" edges="-E7 -E6" /> <!-- North to West -->
+    <route id="route1" edges="-E7 E8" /> <!-- North to East -->
     <route id="route2" edges="-E7 E9" /> <!-- North to South -->
-    <route id="route3" edges="-E7 E8" /> <!-- North to East -->
+    <route id="route3" edges="-E7 -E6" /> <!-- North to West -->
 
 
-    <route id="route4" edges="-E8 E7" /> <!-- East to North -->
+    <route id="route4" edges="-E8 E9" /> <!-- East to South -->
     <route id="route5" edges="-E8 -E6" /> <!-- East to West -->
-    <route id="route6" edges="-E8 E9" /> <!-- East to South -->
+    <route id="route6" edges="-E8 E7" /> <!-- East to North -->
 
 
     <route id="route7" edges="-E9 -E6" /> <!-- South to West -->
@@ -28,17 +28,28 @@
 
 
     <!-- Add vehicles traveling along these routes -->
-    <flow id="flow1" type="car" begin="0" end="1000" number="100" route="route1" />
-    <flow id="flow2" type="car" begin="0" end="1000" number="100" route="route2" />
-    <flow id="flow3" type="car" begin="0" end="1000" number="100" route="route3" />
-    <flow id="flow4" type="car" begin="0" end="1000" number="100" route="route4" />
-    <flow id="flow5" type="car" begin="0" end="1000" number="100" route="route5" />
-    <flow id="flow6" type="car" begin="0" end="1000" number="100" route="route6" />
-    <flow id="flow7" type="car" begin="0" end="1000" number="100" route="route7" />
-    <flow id="flow8" type="car" begin="0" end="1000" number="100" route="route8" />
-    <flow id="flow9" type="car" begin="0" end="1000" number="100" route="route9" />
-    <flow id="flow10" type="car" begin="0" end="1000" number="100" route="route10" />
-    <flow id="flow11" type="car" begin="0" end="1000" number="100" route="route11" />
-    <flow id="flow12" type="car" begin="0" end="1000" number="100" route="route12" />
-
+    <!-- <flow id="flow1" type="car" begin="0" end="1000" number="100" route="route1" /> -->
+    <!-- <flow id="flow2" type="car" begin="0" end="1000" number="100" route="route2" /> -->
+    <!-- <flow id="flow3" type="car" begin="0" end="1000" number="100" route="route3" /> -->
+    <!-- <flow id="flow4" type="car" begin="0" end="1000" number="100" route="route4" /> -->
+    <!-- <flow id="flow5" type="car" begin="0" end="1000" number="100" route="route5" /> -->
+    <!-- <flow id="flow6" type="car" begin="0" end="1000" number="100" route="route6" /> -->
+    <!-- <flow id="flow7" type="car" begin="0" end="1000" number="100" route="route7" /> -->
+    <!-- <flow id="flow8" type="car" begin="0" end="1000" number="100" route="route8" /> -->
+    <!-- <flow id="flow9" type="car" begin="0" end="1000" number="100" route="route9" /> -->
+    <!-- <flow id="flow10" type="car" begin="0" end="1000" number="100" route="route10" /> -->
+    <!-- <flow id="flow11" type="car" begin="0" end="1000" number="100" route="route11" /> -->
+    <!-- <flow id="flow12" type="car" begin="0" end="1000" number="100" route="route12" /> -->
+    <!-- <vehicle id="0" depart="0.00">
+        <route edges="E6 E7"/>
+    </vehicle>
+    <vehicle id="1" depart="0.00">
+        <route edges="E6 E7"/>
+    </vehicle>
+    <vehicle id="2" depart="1.00">
+        <route edges="E6 E7"/>
+    </vehicle>
+    <vehicle id="3" depart="1.00">
+        <route edges="E6 E7"/>
+    </vehicle> -->
 </routes>

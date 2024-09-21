@@ -13,7 +13,11 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.nn as nn
 import matplotlib.pyplot as plt
-
+import threading
+import asyncio
+import websockets
+import json
+from typing import Literal
 
 if "SUMO_HOME" in os.environ:
     tools = os.path.join(os.environ["SUMO_HOME"], "tools")
@@ -286,6 +290,7 @@ def run(train=True, model_name="model", epochs=50, steps=500):
             all_lanes.extend(list(traci.trafficlight.getControlledLanes(junction)))
 
         while step <= steps:
+            traci.vehicle.add(f"veh_{step}", "route1")
             traci.simulationStep()
             for junction_number, junction in enumerate(all_junctions):
                 controled_lanes = traci.trafficlight.getControlledLanes(junction)
@@ -376,6 +381,45 @@ def get_options():
     return options
 
 
+def add_vehicle(
+    direction: Literal["north", "west", "south", "east"],
+    turn: Literal["left", "straight", "right"],
+):
+    routeId = {"north": 0, "west": 1, "south": 2, "east": 3}[direction] * 3
+    +{"left": 0, "straight": 1, "right": 2}[turn]
+    traci.vehicle.add(f"veh_{time.time()}", f"route{routeId}")
+
+
+async def handler(websocket, path):
+    async for message in websocket:
+        data = json.loads(message)
+        print(f"Received data from {path}: {data}")
+        direction = data["direction"]
+        turn = data["turn"]
+        direction = {0: "north", 1: "west", 2: "south", 3: "east"}[direction]
+        turn = {0: "left", 1: "straight", 2: "right"}[turn]
+        # add_vehicle(direction, turn)
+
+
+async def receive_message():
+    uri = "ws://localhost:8765/receiver"
+    while True:
+        try:
+            async with websockets.connect(uri) as websocket:
+                await handler(websocket, uri)
+        except websockets.exceptions.ConnectionClosedError as e:
+            print(f"Connection closed: {e}")
+            print("Reconnecting in 5 seconds...")
+            await asyncio.sleep(5)  # Wait before reconnecting
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            print("Reconnecting in 5 seconds...")
+            await asyncio.sleep(5)  # Wait before reconnecting
+
+
+def run_receive_message():
+    asyncio.run(receive_message())
+
 # this is the main entry point of this script
 if __name__ == "__main__":
     options = get_options()
@@ -384,4 +428,12 @@ if __name__ == "__main__":
     epochs = options.epochs
     steps = options.steps
 
+    # Start the receive_message function in a separate thread
+    websocket_thread = threading.Thread(target=run_receive_message)
+    websocket_thread.start()
+
+    # Run the SUMO simulation
     run(train=train, model_name=model_name, epochs=epochs, steps=steps)
+
+    # Wait for the WebSocket server thread to finish
+    websocket_thread.join()
