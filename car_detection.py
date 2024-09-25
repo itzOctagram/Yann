@@ -287,8 +287,8 @@ stream1 = Stream(
     "https://www.youtube.com/watch?v=oz46g45u80k", "youtube", "YouTube")
 stream2 = Stream(
     "http://81.60.215.31/cgi-bin/viewer/video.jpg", "image", "Image")
-stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
-                 "mjpg", "MJPG")  # Bogota,Columbia
+# stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
+#                  "mjpg", "MJPG")  # Bogota,Columbia
 stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg",
                  "mjpg",
                  "MJPG1")   # Russia
@@ -316,7 +316,7 @@ stream15 = Stream(
 stream16 = Stream(
     "http://175.138.229.49:8082/cgi-bin/viewer/video.jpg?r=1725431504", "image", "Image3")
 
-streams = [stream5]  # Use 4 streams at maximum
+streams = [stream5,_stream8,stream10]  # Use 4 streams at maximum
 
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
