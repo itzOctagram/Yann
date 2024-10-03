@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import yolov5 # type: ignore
+import yolov5  # type: ignore
 from typing import Literal, Optional, List
 import streamlink
 import asyncio
@@ -14,7 +14,9 @@ import threading
 import string
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-#websocket
+# websocket
+
+
 async def send_detection_data(data):
     async with websockets.connect("ws://localhost:8765/sender") as websocket:
         await websocket.send(json.dumps(data))
@@ -217,7 +219,7 @@ class StreamThread(threading.Thread):
                         lane = 0  # Motorcycles use lane 1
                     if (model.names[class_id] == 'car' or model.names[class_id] == 'bus' or model.names[class_id] == 'motorcycle'):
                         # Randomly set willTurn
-                        will_turn = random.choice([0,1,2])
+                        will_turn = random.choice([0, 1, 2])
                         if (model.names[class_id] != 'motorcycle'):
                             if (will_turn != 1):
                                 lane = 2
@@ -287,17 +289,16 @@ stream1 = Stream(
     "https://www.youtube.com/watch?v=oz46g45u80k", "youtube", "YouTube")
 stream2 = Stream(
     "http://81.60.215.31/cgi-bin/viewer/video.jpg", "image", "Image")
-# stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
-#                  "mjpg", "MJPG")  # Bogota,Columbia
+stream3 = Stream("http://181.57.169.89:8080/mjpg/video.mjpg",
+                 "mjpg", "MJPG")  # Bogota,Columbia
 stream4 = Stream("http://31.173.125.161:82/mjpg/video.mjpg",
-                 "mjpg",
-                 "MJPG1")   # Russia
+                 "mjpg", "MJPG1")   # Russia
 stream5 = Stream(
     "http://86.121.159.16/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG2",)
-stream6 = Stream("http://185.137.146.14:80/mjpg/video.mjpg", "mjpg", "MJPG3")
+_stream6 = Stream("http://185.137.146.14:80/mjpg/video.mjpg", "mjpg", "MJPG3")
 _stream7 = Stream(
     "http://79.10.24.158:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG4")
-_stream8 = Stream(
+stream8 = Stream(
     "http://72.24.198.180:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG5")
 stream9 = Stream("http://125.17.248.94:8080/cgi-bin/viewer/video.jpg",
                  "image", "Image1")  # Mumbai
@@ -305,7 +306,7 @@ stream10 = Stream(
     "http://50.252.166.122:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER", "mjpg", "MJPG6")
 stream11 = Stream("http://82.76.145.217:80/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER",
                   "mjpg", "MJPG7")  # Heavy traffic
-_stream12 = Stream("http://80.160.138.86:80/mjpg/video.mjpg",
+stream12 = Stream("http://80.160.138.86:80/mjpg/video.mjpg",
                    "mjpg", "MJPG8")  # Jakarta
 stream13 = Stream("http://103.217.216.197:8001/jpg/image.jpg",
                   "image", "Image2")  # Bekasi, Indonesia
@@ -316,7 +317,9 @@ stream15 = Stream(
 stream16 = Stream(
     "http://175.138.229.49:8082/cgi-bin/viewer/video.jpg?r=1725431504", "image", "Image3")
 
-streams = [stream5,_stream8,stream10]  # Use 4 streams at maximum
+streamCandidates = [stream3,stream4,stream5,stream8,stream9,stream10,stream11,stream12,stream13,stream14,stream16]
+
+streams:list[Stream] = []  # Use 4 streams at maximum
 
 # Load YOLO model
 model = yolov5.load('./yolov5s.pt')
